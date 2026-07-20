@@ -1,0 +1,145 @@
+import { StyleSheet } from 'react-native';
+import { colors } from '../../theme/colors';
+
+export const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    backgroundColor: colors.background,
+  },
+  header: {
+    paddingHorizontal: 16,
+    paddingTop: 56,
+    paddingBottom: 14,
+    borderBottomWidth: 1,
+    borderBottomColor: colors.borderWhite,
+  },
+  backButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  backText: {
+    fontSize: 15,
+    fontWeight: '700',
+    color: colors.textPrimary,
+    marginLeft: 2,
+  },
+  content: {
+    flex: 1,
+    paddingHorizontal: 24,
+    paddingTop: 28,
+  },
+  checkCircle: {
+    width: 56,
+    height: 56,
+    borderRadius: 28,
+    backgroundColor: colors.backgroundDark,
+    alignItems: 'center',
+    justifyContent: 'center',
+    alignSelf: 'center',
+    marginBottom: 16,
+  },
+  titleGreen: {
+    fontSize: 32,
+    fontWeight: '800',
+    fontStyle: 'italic',
+    color: '#5DCAA5',
+    textAlign: 'center',
+    textTransform: 'uppercase',
+    lineHeight: 34,
+  },
+  titleBlack: {
+    fontSize: 32,
+    fontWeight: '800',
+    fontStyle: 'italic',
+    color: '#111',
+    textAlign: 'center',
+    textTransform: 'uppercase',
+    marginBottom: 16,
+    lineHeight: 34,
+  },
+  subtitle: {
+    fontSize: 15,
+    color: '#1D9E75',
+    textAlign: 'center',
+    lineHeight: 21,
+    marginBottom: 24,
+  },
+  divider: {
+    height: 1,
+    backgroundColor: colors.borderWhite,
+    marginBottom: 24,
+  },
+  sectionTitle: {
+    fontSize: 20,
+    fontWeight: '800',
+    color: '#111',
+    marginBottom: 6,
+  },
+  sectionDescription: {
+    fontSize: 13,
+    color: '#888',
+    marginBottom: 14,
+  },
+  sectionSpacing: {
+    height: 28,
+  },
+  card: {
+    backgroundColor: '#EAF9EE',
+    borderRadius: 18,
+    padding: 16,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    gap: 12,
+  },
+  code: {
+    fontSize: 26,
+    fontWeight: '800',
+    color: '#111',
+    letterSpacing: 1,
+    flexShrink: 1,
+  },
+  link: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: '#111',
+    flex: 1,
+  },
+  actionButton: {
+    backgroundColor: '#BFF2C8',
+    borderRadius: 14,
+    paddingVertical: 12,
+    paddingHorizontal: 16,
+    alignItems: 'center',
+    gap: 4,
+  },
+  actionButtonText: {
+    fontSize: 12,
+    fontWeight: '700',
+    color: '#111',
+  },
+  footnote: {
+    fontSize: 12,
+    color: '#999',
+    textAlign: 'center',
+    marginTop: 24,
+  },
+  footer: {
+    paddingHorizontal: 24,
+    paddingBottom: 28,
+    paddingTop: 12,
+  },
+  goButton: {
+    backgroundColor: colors.backgroundDark,
+    paddingVertical: 18,
+    borderRadius: 30,
+    alignItems: 'center',
+  },
+  goButtonText: {
+    fontSize: 14,
+    fontWeight: '700',
+    color: colors.textOnDark,
+    letterSpacing: 1,
+  },
+
+});
