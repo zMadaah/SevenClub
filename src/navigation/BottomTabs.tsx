@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { View, TouchableOpacity, Text, StyleSheet } from 'react-native';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
-import { Ionicons } from '@expo/vector-icons';
+import { Ionicons, FontAwesome5 } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { useNavigation } from '@react-navigation/native';
@@ -72,7 +72,7 @@ export default function BottomTabs() {
                         title: 'Mapa',
                         tabBarIcon: () => (
                             <View style={styles.centerTabIcon}>
-                                <Ionicons name="walk" size={32} color={colors.backgroundDark} />
+                                <FontAwesome5 name="location-arrow" size={32} color={colors.backgroundDark} />
                             </View>
                         ),
                     }}
