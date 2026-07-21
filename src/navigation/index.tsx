@@ -1,7 +1,15 @@
 import React from 'react';
 import { NavigationContainer } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
+
 import BottomTabs from './BottomTabs';
+
+import Login from '../screens/Login';
+import SignUp from '../screens/SignUp';
+import VerifyCode from '../screens/VerifyCode';
+import CreatePassword from '../screens/CreatePassword';
+import ForgotPassword from '../screens/ForgotPassword';
+import NewPassword from '../screens/NewPassword';
 
 
 import Profile from '../screens/Profile';
@@ -24,36 +32,57 @@ import ManageNotifications from '../screens/ManageNotification' ;
 import { RootStackParamList } from './types';
 import { ActiveLobbyProvider } from '../contexts/ActiveLobbyContext';
 import { SavedRoutesProvider } from '../contexts/SavedRoutesContext';
+import { AuthProvider, useAuth } from '../contexts/AuthContext';
 
 const Stack = createNativeStackNavigator<RootStackParamList>();
 
+function RootNavigator() {
+  const { isAuthenticated } = useAuth();
+
+  return (
+    <Stack.Navigator screenOptions={{ headerShown: false }}>
+      {isAuthenticated ? (
+        <>
+          <Stack.Screen name="Main" component={BottomTabs} />
+          <Stack.Screen name="Profile" component={Profile} />
+          <Stack.Screen name="Private" component={Private} />
+          <Stack.Screen name="ActivityStart" component={ActivityStart} />
+          <Stack.Screen name="RoutePlan" component={RoutePlan} />
+          <Stack.Screen name="CreateLobby" component={CreateLobby} />
+          <Stack.Screen name="LobbyConfirmed" component={LobbyConfirmed} />
+          <Stack.Screen name="EditProfile" component={EditProfile} />
+          <Stack.Screen name="SupportChat" component={SupportChat} />
+          <Stack.Screen name="MyStats" component={MyStats} />
+          <Stack.Screen name="ViewHistory" component={ViewHistory} />
+          <Stack.Screen name="Notifications" component={Notifications} />
+          <Stack.Screen name="ManageNotifications" component={ManageNotifications} />
+          <Stack.Screen name="AddFriend" component={AddFriend} />
+          <Stack.Screen name="JoinLobby" component={JoinLobby} />
+        </>
+      ) : (
+        <>
+          <Stack.Screen name="Login" component={Login} />
+          <Stack.Screen name="SignUp" component={SignUp} />
+          <Stack.Screen name="VerifyCode" component={VerifyCode} />
+          <Stack.Screen name="CreatePassword" component={CreatePassword} />
+          <Stack.Screen name="ForgotPassword" component={ForgotPassword} />
+          <Stack.Screen name="NewPassword" component={NewPassword} />
+        </>
+      )}
+    </Stack.Navigator>
+  );
+}
+
 export default function Navigation() {
-
-    return (
-        <ActiveLobbyProvider>
-            <SavedRoutesProvider>
-                <NavigationContainer>
-
-                    <Stack.Navigator screenOptions={{ headerShown: false }}>
-                        <Stack.Screen name="Main" component={BottomTabs} />
-                        <Stack.Screen name="Profile" component={Profile} />
-                        <Stack.Screen name="Private" component={Private} />
-                        <Stack.Screen name="ActivityStart" component={ActivityStart} />
-                        <Stack.Screen name="RoutePlan" component={RoutePlan} />
-                        <Stack.Screen name="CreateLobby" component={CreateLobby} />
-                        <Stack.Screen name="JoinLobby" component={JoinLobby} />
-                        <Stack.Screen name="LobbyConfirmed" component={LobbyConfirmed} />
-                        <Stack.Screen name="EditProfile" component={EditProfile} />
-                        <Stack.Screen name="SupportChat" component={SupportChat} />
-                        <Stack.Screen name="MyStats" component={MyStats} />
-                        <Stack.Screen name="ViewHistory" component={ViewHistory} />
-                        <Stack.Screen name="Notifications" component={Notifications} />
-                        <Stack.Screen name="ManageNotifications" component={ManageNotifications} />
-                        <Stack.Screen name="AddFriend" component={AddFriend} />
-
-                    </Stack.Navigator>
-                </NavigationContainer>
-            </SavedRoutesProvider>
-        </ActiveLobbyProvider>
-    );
+  return (
+    <AuthProvider>
+      <ActiveLobbyProvider>
+        <SavedRoutesProvider>
+          <NavigationContainer>
+            <RootNavigator />
+          </NavigationContainer>
+        </SavedRoutesProvider>
+      </ActiveLobbyProvider>
+    </AuthProvider>
+  );
 }

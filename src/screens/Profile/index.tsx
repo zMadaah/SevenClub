@@ -6,6 +6,8 @@ import { useNavigation } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { RootStackParamList } from '../../navigation/types';
 
+import { useAuth } from '../../contexts/AuthContext'
+;
 import UnitPreferenceModal from './components/UnitPreferenceModal';
 import { UnitSystem } from '../../types/preference';
 
@@ -17,6 +19,7 @@ export default function Profile() {
   const [unitSystem, setUnitSystem] = useState<UnitSystem>('metric');
   const [unitModalVisible, setUnitModalVisible] = useState(false);
   const [supportExpanded, setSupportExpanded] = useState(false);
+  const { logout } = useAuth();
 
   const unitLabel = unitSystem === 'metric' ? 'Quilômetros e metros' : 'Milhas e pés';
 
@@ -49,7 +52,7 @@ export default function Profile() {
 
         <Text style={styles.name}>João Cruz</Text>
 
-        <TouchableOpacity style={styles.profileButton} onPress={ () =>navigation.navigate('MyStats') }>
+        <TouchableOpacity style={styles.profileButton} onPress={() => navigation.navigate('MyStats')}>
           <Text style={styles.profileButtonText}>Ver perfil</Text>
         </TouchableOpacity>
       </View>
@@ -73,7 +76,7 @@ export default function Profile() {
       {/* Menu */}
       <View style={styles.menu}>
         <MenuItem icon="search-outline" title="Adicionar amigos" type="chevron"
-          onPress={ () =>navigation.navigate('AddFriend')}
+          onPress={() => navigation.navigate('AddFriend')}
         />
 
         <MenuItem icon="qr-code-outline" title="Inserir código de indicação" type="chevron" />
@@ -153,7 +156,7 @@ export default function Profile() {
       </View>
 
       {/* Sair */}
-      <TouchableOpacity style={styles.logoutButton}>
+      <TouchableOpacity style={styles.logoutButton} onPress={logout}>
         <Text style={styles.logoutText}>SAIR</Text>
       </TouchableOpacity>
 
