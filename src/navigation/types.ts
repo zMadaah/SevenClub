@@ -26,6 +26,8 @@ export type RootStackParamList = {
     ViewHistory: undefined;
     Notifcations: undefined;
     ManageNotifications: undefined;
+    ViewTerritories: undefined;
+    ViewActivity: undefined;
 };
 
 export type BottomTabsParamList = {

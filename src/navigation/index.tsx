@@ -26,6 +26,8 @@ import MyStats from '../screens/MyStats';
 import ViewHistory from '../screens/ViewHistory';
 import Notifications from '../screens/Notifications';
 import ManageNotifications from '../screens/ManageNotification' ; 
+import ViewTerritories from '../screens/ViewTerritories';
+import ViewActivities from '../screens/ViewActivities';
 
 
 
@@ -58,6 +60,8 @@ function RootNavigator() {
           <Stack.Screen name="ManageNotifications" component={ManageNotifications} />
           <Stack.Screen name="AddFriend" component={AddFriend} />
           <Stack.Screen name="JoinLobby" component={JoinLobby} />
+          <Stack.Screen name="ViewTerritories" component={ViewTerritories} />
+          <Stack.Screen name="ViewActivities" component={ViewActivities} />
         </>
       ) : (
         <>

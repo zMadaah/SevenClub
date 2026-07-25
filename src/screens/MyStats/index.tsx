@@ -124,7 +124,7 @@ export default function MyStats() {
         </View>
 
         <View style={styles.menu}>
-          <TouchableOpacity style={styles.menuItem}>
+          <TouchableOpacity style={styles.menuItem} onPress={() => navigation.navigate('ViewActivities')}>
             <View style={styles.menuLeft}>
               <Ionicons name="list-outline" size={22} color={colors.textPrimary} />
               <Text style={styles.menuText}>Ver atividades</Text>
@@ -140,7 +140,7 @@ export default function MyStats() {
             <Ionicons name="chevron-forward" size={20} color={colors.textMuted} />
           </TouchableOpacity>
 
-          <TouchableOpacity style={styles.menuItem}>
+          <TouchableOpacity style={styles.menuItem} onPress={() => navigation.navigate('ViewTerritories')}>
             <View style={styles.menuLeft}>
               <Ionicons name="location-outline" size={22} color={colors.textPrimary} />
               <Text style={styles.menuText}>Ver territórios</Text>

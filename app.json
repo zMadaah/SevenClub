@@ -4,11 +4,11 @@
     "slug": "SevenClub",
     "version": "1.0.0",
     "orientation": "portrait",
-    "icon": "./assets/logo.png",
+    "icon": "./assets/seven.jpg",
     "userInterfaceStyle": "light",
     "newArchEnabled": true,
     "splash": {
-      "image": "./assets/logo.png",
+      "image": "./assets/seven.jpg",
       "resizeMode": "contain",
       "backgroundColor": "#96998c"
     },
@@ -20,7 +20,7 @@
     },
     "android": {
       "adaptiveIcon": {
-        "foregroundImage": "./assets/logo.png",
+        "foregroundImage": "./assets/seven.jpg",
         "backgroundColor": "#e9ebe6"
       },
       "edgeToEdgeEnabled": true,
@@ -32,7 +32,7 @@
       ]
     },
     "web": {
-      "favicon": "./assets/favicon.png"
+      "favicon": "./assets/seven.jpg"
     }
   }
 }
