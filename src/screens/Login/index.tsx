@@ -42,27 +42,6 @@ export default function Login() {
       <View style={styles.content}>
         <Text style={styles.title}>bem-vindo{'\n'}de volta</Text>
 
-        <TouchableOpacity style={styles.socialButton} onPress={() => handleSocialLogin('Google')}>
-          <FontAwesome name="google" size={18} color={colors.textPrimary} />
-          <Text style={styles.socialButtonText}>Continuar com Google</Text>
-        </TouchableOpacity>
-
-        <TouchableOpacity style={styles.socialButton} onPress={() => handleSocialLogin('Apple')}>
-          <Ionicons name="logo-apple" size={20} color={colors.textPrimary} />
-          <Text style={styles.socialButtonText}>Continuar com Apple</Text>
-        </TouchableOpacity>
-
-        <TouchableOpacity style={styles.socialButton} onPress={() => handleSocialLogin('Strava')}>
-          <MaterialCommunityIcons name="run" size={20} color={colors.textPrimary} />
-          <Text style={styles.socialButtonText}>Continuar com Strava</Text>
-        </TouchableOpacity>
-
-        <View style={styles.dividerRow}>
-          <View style={styles.dividerLine} />
-          <Text style={styles.dividerText}>ou</Text>
-          <View style={styles.dividerLine} />
-        </View>
-
         <TextInput
           style={styles.input}
           placeholder="e-mail"
@@ -81,6 +60,28 @@ export default function Login() {
           onChangeText={setPassword}
           secureTextEntry
         />
+        <View style={styles.dividerRow}>
+          <View style={styles.dividerLine} />
+          <Text style={styles.dividerText}>ou</Text>
+          <View style={styles.dividerLine} />
+        </View>
+
+        <TouchableOpacity style={styles.socialButton} onPress={() => handleSocialLogin('Google')}>
+          <FontAwesome name="google" size={18} color={colors.textPrimary} />
+          <Text style={styles.socialButtonText}>Continuar com Google</Text>
+        </TouchableOpacity>
+
+        <TouchableOpacity style={styles.socialButton} onPress={() => handleSocialLogin('Apple')}>
+          <Ionicons name="logo-apple" size={20} color={colors.textPrimary} />
+          <Text style={styles.socialButtonText}>Continuar com Apple</Text>
+        </TouchableOpacity>
+
+        <TouchableOpacity style={styles.socialButton} onPress={() => handleSocialLogin('Strava')}>
+          <MaterialCommunityIcons name="run" size={20} color={colors.textPrimary} />
+          <Text style={styles.socialButtonText}>Continuar com Strava</Text>
+        </TouchableOpacity>
+
+
 
         <TouchableOpacity onPress={() => navigation.navigate('ForgotPassword')}>
           <Text style={styles.forgotText}>Esqueceu a senha?</Text>

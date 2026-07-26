@@ -1,12 +1,12 @@
 import { StyleSheet } from 'react-native';
 import { colors } from '../../theme/colors'
-import { Color } from 'react-native/types_generated/Libraries/Animated/AnimatedExports';
+
 
 export const styles = StyleSheet.create({
 
     container:{
         flex:1,
-        backgroundColor:colors.backgroundAlt,
+        backgroundColor:colors.background,
         padding:20,
     },
 

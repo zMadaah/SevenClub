@@ -1,13 +1,16 @@
 import React, { useState } from 'react';
 import { View, Text, ScrollView, TouchableOpacity, Image } from 'react-native';
 import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
-
+import { useNavigation } from '@react-navigation/native';
+import { NativeStackNavigationProp } from '@react-navigation/native-stack';
+import { RootStackParamList } from '../../navigation/types';
 import { MOCK_CHALLENGES, MOCK_COMPETITIONS } from '../../services/mock/progress';
 import { styles } from './styles';
 
 const TABS = ['Progresso', 'Atividades', 'Território'];
 
 export default function Progress() {
+    const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
     const [activeTab, setActiveTab] = useState('Progresso');
 
     const level = 0;
@@ -24,7 +27,10 @@ export default function Progress() {
         <View style={styles.container}>
             {/* Barra de abas + atividade */}
             <View style={styles.topBar}>
+                <TouchableOpacity onPress={() => navigation.navigate('Profile')}>
+
                 <Image source={{ uri: 'https://i.pravatar.cc/200?img=10' }} style={styles.avatar} />
+                </TouchableOpacity>
 
                 <ScrollView
                     horizontal
@@ -38,7 +44,13 @@ export default function Progress() {
                             <TouchableOpacity
                                 key={tab}
                                 style={[styles.tabPill, active && styles.tabPillActive]}
-                                onPress={() => setActiveTab(tab)}
+                                onPress={() => {
+                                    if (tab === 'Atividades') {
+                                        navigation.navigate('ViewActivities');
+                                        return;
+                                    }
+                                    setActiveTab(tab);
+                                }}
                             >
                                 <Text style={[styles.tabText, active && styles.tabTextActive]}>{tab}</Text>
                             </TouchableOpacity>
@@ -141,9 +153,9 @@ export default function Progress() {
                         <Text style={styles.sectionTitle}>TOP Rivais</Text>
                     </View>
                     <Text style={styles.sectionSubtitle}>Suas batalhas obrigatórias
-Recupere território ou amplie sua vantagem.</Text>
+                        Recupere território ou amplie sua vantagem.</Text>
                     <Text style={styles.sectionSubtitleLast}>
-                       Ainda não são rivais, mas assim que você roubar o território de alguém ou eles roubarem o seu, isso aparecerá aqui
+                        Ainda não são rivais, mas assim que você roubar o território de alguém ou eles roubarem o seu, isso aparecerá aqui
                     </Text>
 
                     {/* <View style={styles.sectionHeader}>

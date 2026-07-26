@@ -5,7 +5,7 @@ export const styles = StyleSheet.create({
 
   container: {
     flex: 1,
-    backgroundColor: colors.backgroundAlt,
+    backgroundColor: colors.background,
   },
 
   content: {
