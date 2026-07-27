@@ -4,7 +4,8 @@ import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
 import { useNavigation } from '@react-navigation/native';
 import MapView, { Polygon } from 'react-native-maps';
 
-import TerritoryDetailSheet from './components/TerritoryDetaislSheet';
+// import TerritoryDetailSheet from './components/TerritoryDetailSheet';
+import TerritoryDetailSheet from './components/TerritoryDetailSheet';
 import { MOCK_TERRITORIES, MOCK_USER_TERRITORY_COLOR } from '../../services/mock/territories';
 import { darkMapStyle } from '../../Map/darkMapStyle';
 import { ActivityType } from '../../types/lobby';
