@@ -197,4 +197,42 @@ settingValue: {
   textDecorationLine: 'underline',
 },
 
+settingValueDanger: {
+  fontSize: 13,
+  fontWeight: '700',
+  color: '#D85A30',
+  textTransform: 'uppercase',
+  letterSpacing: 0.4,
+  textDecorationLine: 'underline',
+},
+privacyToggle: {
+  width: 44,
+  height: 26,
+  borderRadius: 13,
+  backgroundColor: 'rgba(0,0,0,0.15)',
+  padding: 2,
+  justifyContent: 'center',
+},
+privacyToggleOn: {
+  backgroundColor: '#08221C',
+},
+privacyToggleThumb: {
+  width: 22,
+  height: 22,
+  borderRadius: 11,
+  backgroundColor: '#fff',
+},
+privacyToggleThumbOn: {
+  transform: [{ translateX: 18 }],
+},
+
+settingValueStatic: {
+  fontSize: 13,
+  fontWeight: '700',
+  color: '#08221C',
+  textTransform: 'uppercase',
+  letterSpacing: 0.4,
+  opacity: 0.7,
+},
+
 });

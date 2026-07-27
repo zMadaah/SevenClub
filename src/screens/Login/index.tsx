@@ -40,7 +40,7 @@ export default function Login() {
   return (
     <View style={styles.container}>
       <View style={styles.content}>
-        <Text style={styles.title}>bem-vindo{'\n'}de volta</Text>
+        <Text style={styles.title}>bem-vindo{'\n'}ao Seven Club</Text>
 
         <TextInput
           style={styles.input}

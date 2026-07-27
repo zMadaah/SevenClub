@@ -21,6 +21,7 @@ import JoinLobby from '../screens/JoinLobby';
 import LobbyConfirmed from '../screens/LobbyConfirmed';
 import EditProfile from '../screens/EditProfile';
 import AddFriend from '../screens/AddFriend';
+import ReferralCode from '../screens/ReferralCode';
 import SupportChat from '../screens/SupportChat';
 import MyStats from '../screens/MyStats';   
 import ViewHistory from '../screens/ViewHistory';
@@ -59,6 +60,7 @@ function RootNavigator() {
           <Stack.Screen name="Notifications" component={Notifications} />
           <Stack.Screen name="ManageNotifications" component={ManageNotifications} />
           <Stack.Screen name="AddFriend" component={AddFriend} />
+          <Stack.Screen name="ReferralCode" component={ReferralCode} />
           <Stack.Screen name="JoinLobby" component={JoinLobby} />
           <Stack.Screen name="ViewTerritories" component={ViewTerritories} />
           <Stack.Screen name="ViewActivities" component={ViewActivities} />

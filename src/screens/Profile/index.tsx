@@ -1,13 +1,13 @@
 import React, { useState } from 'react';
 
-import { View, Text, Image, TouchableOpacity, ScrollView, } from 'react-native';
+import { View, Text, Image, TouchableOpacity, ScrollView, Alert } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useNavigation } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { RootStackParamList } from '../../navigation/types';
 
 import { useAuth } from '../../contexts/AuthContext'
-;
+  ;
 import UnitPreferenceModal from './components/UnitPreferenceModal';
 import { UnitSystem } from '../../types/preference';
 
@@ -17,11 +17,42 @@ export default function Profile() {
   const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
   const [appSettingsExpanded, setAppSettingsExpanded] = useState(false);
   const [unitSystem, setUnitSystem] = useState<UnitSystem>('metric');
+  const [privacyExpanded, setPrivacyExpanded] = useState(false);
+  const [plansExpanded, setPlansExpanded] = useState(false);
+  const [anonymousMode, setAnonymousMode] = useState(false);
   const [unitModalVisible, setUnitModalVisible] = useState(false);
   const [supportExpanded, setSupportExpanded] = useState(false);
   const { logout } = useAuth();
 
   const unitLabel = unitSystem === 'metric' ? 'Quilômetros e metros' : 'Milhas e pés';
+
+  function handleManagePrivacy(section: string) {
+    // TODO: navegar para a tela real assim que existir
+    Alert.alert('Em breve', `Gerenciamento de "${section}" ainda não está disponível.`);
+  }
+
+  function handleRemoveTerraData() {
+    // TODO: conectar em services/api.ts — ação destrutiva, deve pedir confirmação real
+    Alert.alert(
+      'Remover dados',
+      'Isso vai apagar permanentemente seus dados de território e atividade. Deseja continuar?',
+      [
+        { text: 'Cancelar', style: 'cancel' },
+        { text: 'Remover', style: 'destructive', onPress: () => { } },
+      ]
+    );
+  }
+
+  function handleManageSubscription() {
+    // TODO: navegar para tela real de assinatura/paywall quando existir
+    Alert.alert('Em breve', 'A tela de assinatura Pro ainda não está disponível.');
+  }
+
+  function handleRestorePurchases() {
+    // TODO: conectar com a store real (App Store/Google Play) via
+    // expo-in-app-purchases ou RevenueCat quando o app tiver produtos configurados
+    Alert.alert('Restaurar compras', 'Nenhuma compra anterior foi encontrada.');
+  }
 
   return (
     <ScrollView
@@ -79,7 +110,9 @@ export default function Profile() {
           onPress={() => navigation.navigate('AddFriend')}
         />
 
-        <MenuItem icon="qr-code-outline" title="Inserir código de indicação" type="chevron" />
+        <MenuItem icon="qr-code-outline" title="Inserir código de indicação" type="chevron"
+          onPress={() => navigation.navigate('ReferralCode')}
+         />
         <MenuItem icon="create-outline" title="Editar perfil" type="chevron"
           onPress={() => navigation.navigate('EditProfile')}
         />
@@ -119,7 +152,66 @@ export default function Profile() {
             </View>
           </View>
         )}
-        <MenuItem icon="shield-outline" title="Privacidade" type="plus" />
+        {!privacyExpanded ? (
+          <MenuItem
+            icon="shield-outline"
+            title="Privacidade"
+            type="plus"
+            onPress={() => setPrivacyExpanded(true)}
+          />
+        ) : (
+          <View style={styles.appSettingsCard}>
+            <TouchableOpacity
+              style={styles.appSettingsHeader}
+              onPress={() => setPrivacyExpanded(false)}
+              activeOpacity={0.7}
+            >
+              <View style={styles.menuLeft}>
+                <Ionicons name="shield-outline" size={22} color="#111" />
+                <Text style={styles.menuTitle}>Privacidade</Text>
+              </View>
+              <Ionicons name="remove" size={22} color="#111" />
+            </TouchableOpacity>
+
+            <View style={styles.settingRow}>
+              <Text style={styles.settingLabel}>Modo anônimo</Text>
+              <TouchableOpacity
+                style={[styles.privacyToggle, anonymousMode && styles.privacyToggleOn]}
+                onPress={() => setAnonymousMode((prev) => !prev)}
+              >
+                <View style={[styles.privacyToggleThumb, anonymousMode && styles.privacyToggleThumbOn]} />
+              </TouchableOpacity>
+            </View>
+
+            <View style={styles.settingRow}>
+              <Text style={styles.settingLabel}>Visibilidade do mapa</Text>
+              <TouchableOpacity onPress={() => handleManagePrivacy('Visibilidade do mapa')}>
+                <Text style={styles.settingValue}>Gerenciar</Text>
+              </TouchableOpacity>
+            </View>
+
+            <View style={styles.settingRow}>
+              <Text style={styles.settingLabel}>Visibilidade do perfil</Text>
+              <TouchableOpacity onPress={() => handleManagePrivacy('Visibilidade do perfil')}>
+                <Text style={styles.settingValue}>Gerenciar</Text>
+              </TouchableOpacity>
+            </View>
+
+            <View style={styles.settingRow}>
+              <Text style={styles.settingLabel}>Usuários bloqueados</Text>
+              <TouchableOpacity onPress={() => handleManagePrivacy('Usuários bloqueados')}>
+                <Text style={styles.settingValue}>Gerenciar</Text>
+              </TouchableOpacity>
+            </View>
+
+            <View style={styles.settingRow}>
+              <Text style={styles.settingLabel}>Remover dados</Text>
+              <TouchableOpacity onPress={handleRemoveTerraData}>
+                <Text style={styles.settingValueDanger}>Remover</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        )}
         {!supportExpanded ? (
           <MenuItem
             icon="chatbubble-ellipses-outline"
@@ -149,10 +241,44 @@ export default function Profile() {
             </View>
           </View>
         )}
-        {/* <MenuItem icon="card-outline" title="Planos e compras" type="plus" />
-        <MenuItem icon="git-network-outline" title="Integrações" type="plus" /> */}
+        {!plansExpanded ? (
+          <MenuItem
+            icon="card-outline"
+            title="Planos e compras"
+            type="plus"
+            onPress={() => setPlansExpanded(true)}
+          />
+        ) : (
+          <View style={styles.appSettingsCard}>
+            <TouchableOpacity
+              style={styles.appSettingsHeader}
+              onPress={() => setPlansExpanded(false)}
+              activeOpacity={0.7}
+            >
+              <View style={styles.menuLeft}>
+                <Ionicons name="card-outline" size={22} color="#111" />
+                <Text style={styles.menuTitle}>Planos e compras</Text>
+              </View>
+              <Ionicons name="remove" size={22} color="#111" />
+            </TouchableOpacity>
+
+            <View style={styles.settingRow}>
+              <Text style={styles.settingLabel}>Assinatura</Text>
+              <TouchableOpacity onPress={handleManageSubscription}>
+                <Text style={styles.settingValue}>Assinar Pro</Text>
+              </TouchableOpacity>
+            </View>
+
+            <View style={styles.settingRow}>
+              <Text style={styles.settingLabel}>Restaurar compras</Text>
+              <TouchableOpacity onPress={handleRestorePurchases}>
+                <Text style={styles.settingValue}>Restaurar</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        )}
+        {/* <MenuItem icon="git-network-outline" title="Integrações" type="plus" />  */}
         {/* <MenuItem icon="help-circle-outline" title="Perguntas frequentes" type="chevron" /> */}
-        {/* <MenuItem icon="list-outline" title="Notas de atualização" type="chevron" /> */}
       </View>
 
       {/* Sair */}

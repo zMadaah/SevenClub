@@ -21,6 +21,7 @@ export type RootStackParamList = {
     };
     EditProfile: undefined;
     AddFriend: undefined;
+    ReferralCode: undefined;
     SupportChat: undefined;
     MyStats: undefined;
     ViewHistory: undefined;
