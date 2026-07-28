@@ -19,14 +19,18 @@ import RoutePlan from '../screens/RoutePlan';
 import CreateLobby from '../screens/CreateLobby';
 import JoinLobby from '../screens/JoinLobby';
 import LobbyConfirmed from '../screens/LobbyConfirmed';
+import Crew from '../screens/Crew';
+import CreateCrew from '../screens/CreateCrew';
+import JoinCrew from '../screens/JoinCrew';
+import CrewConfirmed from '../screens/CrewConfirmed';
 import EditProfile from '../screens/EditProfile';
 import AddFriend from '../screens/AddFriend';
 import ReferralCode from '../screens/ReferralCode';
 import SupportChat from '../screens/SupportChat';
-import MyStats from '../screens/MyStats';   
+import MyStats from '../screens/MyStats';
 import ViewHistory from '../screens/ViewHistory';
 import Notifications from '../screens/Notifications';
-import ManageNotifications from '../screens/ManageNotification' ; 
+import ManageNotifications from '../screens/ManageNotification';
 import ViewTerritories from '../screens/ViewTerritories';
 import ViewActivities from '../screens/ViewActivities';
 
@@ -36,6 +40,7 @@ import { RootStackParamList } from './types';
 import { ActiveLobbyProvider } from '../contexts/ActiveLobbyContext';
 import { SavedRoutesProvider } from '../contexts/SavedRoutesContext';
 import { AuthProvider, useAuth } from '../contexts/AuthContext';
+import { ActiveCrewProvider } from '../contexts/ActiveCrewContext';
 
 const Stack = createNativeStackNavigator<RootStackParamList>();
 
@@ -53,6 +58,10 @@ function RootNavigator() {
           <Stack.Screen name="RoutePlan" component={RoutePlan} />
           <Stack.Screen name="CreateLobby" component={CreateLobby} />
           <Stack.Screen name="LobbyConfirmed" component={LobbyConfirmed} />
+          <Stack.Screen name="Crew" component={Crew} />
+          <Stack.Screen name="CreateCrew" component={CreateCrew} />
+          <Stack.Screen name="JoinCrew" component={JoinCrew} />
+          <Stack.Screen name="CrewConfirmed" component={CrewConfirmed} />
           <Stack.Screen name="EditProfile" component={EditProfile} />
           <Stack.Screen name="SupportChat" component={SupportChat} />
           <Stack.Screen name="MyStats" component={MyStats} />
@@ -83,11 +92,13 @@ export default function Navigation() {
   return (
     <AuthProvider>
       <ActiveLobbyProvider>
-        <SavedRoutesProvider>
-          <NavigationContainer>
-            <RootNavigator />
-          </NavigationContainer>
-        </SavedRoutesProvider>
+        <ActiveCrewProvider>
+          <SavedRoutesProvider>
+            <NavigationContainer>
+              <RootNavigator />
+            </NavigationContainer>
+          </SavedRoutesProvider>
+        </ActiveCrewProvider>
       </ActiveLobbyProvider>
     </AuthProvider>
   );

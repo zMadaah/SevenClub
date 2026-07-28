@@ -57,6 +57,10 @@ export default function HomeHeader({
                       navigation.navigate('Private');
                       return;
                     }
+                    if (mode === 'crew') {
+                      navigation.navigate('Crew');
+                      return;
+                    }
                     onCategoryChange(mode);
                   }}
                   style={[

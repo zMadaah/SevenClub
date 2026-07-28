@@ -1,3 +1,5 @@
+import { ActivityType } from './lobby';
+
 export interface RunnerSummary {
   id: string;
   name: string;
@@ -20,4 +22,7 @@ export interface FeedPost {
   territoryKm2?: number;
   likes: number;
   comments: number;
+  activityType: ActivityType;
+  isGroup: boolean;
+  isFollowing: boolean;
 }

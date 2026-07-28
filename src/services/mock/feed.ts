@@ -24,6 +24,9 @@ export const MOCK_FEED: FeedPost[] = [
     territoryKm2: 2.1,
     likes: 94,
     comments: 6,
+    activityType: 'run',
+    isGroup: true,
+    isFollowing: true,
   },
   {
     id: '2',
@@ -44,5 +47,8 @@ export const MOCK_FEED: FeedPost[] = [
     territoryKm2: 3.4,
     likes: 58,
     comments: 2,
+    activityType: 'ride',
+    isGroup: false,
+    isFollowing: true,
   },
 ];

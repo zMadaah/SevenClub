@@ -29,6 +29,14 @@ export type RootStackParamList = {
     ManageNotifications: undefined;
     ViewTerritories: undefined;
     ViewActivity: undefined;
+    Crew: undefined;
+    CreateCrew: undefined;
+    JoinCrew: undefined;
+    CrewConfirmed: {
+        crewId: string;
+        crewName: string;
+        inviteCode: string;
+    };
 };
 
 export type BottomTabsParamList = {

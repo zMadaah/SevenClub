@@ -49,4 +49,15 @@ export const styles = StyleSheet.create({
     paddingHorizontal: 16,
     paddingBottom: 24,
   },
+   emptyState: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 8,
+    paddingTop: 60,
+  },
+  emptyText: {
+    fontSize: 13,
+    color: '#999',
+  },
 });

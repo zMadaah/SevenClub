@@ -1,26 +1,21 @@
-export interface LobbyMember {
+export interface CrewMember {
   id: string;
   name: string;
   avatarUrl: string;
+  role: 'owner' | 'member';
 }
 
-export interface Lobby {
+export interface Crew {
   id: string;
   name: string;
   pictureUri?: string;
+  city: string;
+  isPublic: boolean;
   allowPreviousImports: boolean;
   allowMemberInvitations: boolean;
   inGameChatEnabled: boolean;
-  maxLobbySize: number | null;
+  maxCrewSize: number | null;
   inviteCode: string;
-  members: LobbyMember[];
+  members: CrewMember[];
   createdAt: number;
-}
-
-export type ActivityType = 'run' | 'ride';
-
-export interface LobbyMember {
-  id: string;
-  name: string;
-  avatarUrl: string;
 }
