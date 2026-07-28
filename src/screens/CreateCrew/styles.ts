@@ -71,6 +71,7 @@ export const styles = StyleSheet.create({
     paddingVertical: 16,
     fontSize: 15,
     color: '#111',
+    marginBottom:5,
   },
   divider: {
     height: 1,

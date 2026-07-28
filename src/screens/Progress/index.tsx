@@ -4,8 +4,11 @@ import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
 import { useNavigation } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { RootStackParamList } from '../../navigation/types';
-import { MOCK_CHALLENGES, MOCK_COMPETITIONS } from '../../services/mock/progress';
 import { styles } from './styles';
+
+import RivalCard from '../../components/RivalCard';
+import { MOCK_CHALLENGES, MOCK_COMPETITIONS } from '../../services/mock/progress';
+import { MOCK_RIVALS, YOUR_COLOR } from '../../services/mock/rivals';
 
 const TABS = ['Progresso', 'Atividades', 'Território'];
 
@@ -22,6 +25,7 @@ export default function Progress() {
     const rivalsBeating = 0;
 
     const expProgress = Math.min(exp / expTarget, 1) * 100;
+    const rivals = MOCK_RIVALS.run;
 
     return (
         <View style={styles.container}>
@@ -29,7 +33,7 @@ export default function Progress() {
             <View style={styles.topBar}>
                 <TouchableOpacity onPress={() => navigation.navigate('Profile')}>
 
-                <Image source={{ uri: 'https://i.pravatar.cc/200?img=10' }} style={styles.avatar} />
+                    <Image source={{ uri: 'https://i.pravatar.cc/200?img=10' }} style={styles.avatar} />
                 </TouchableOpacity>
 
                 <ScrollView
@@ -47,6 +51,10 @@ export default function Progress() {
                                 onPress={() => {
                                     if (tab === 'Atividades') {
                                         navigation.navigate('ViewActivities');
+                                        return;
+                                    }
+                                    if (tab === 'Território') {
+                                        navigation.navigate('Leaderboard');
                                         return;
                                     }
                                     setActiveTab(tab);
@@ -148,10 +156,33 @@ export default function Progress() {
                         ))}
                     </ScrollView>
 
-                    <View style={styles.sectionHeader}>
-                        <MaterialCommunityIcons name="sword-cross" size={16} color="#061414" />
-                        <Text style={styles.sectionTitle}>TOP Rivais</Text>
-                    </View>
+                    <TouchableOpacity
+    style={styles.sectionHeader}
+    onPress={() => navigation.navigate('Rivals')}
+    activeOpacity={0.7}
+>
+    <MaterialCommunityIcons name="sword-cross" size={16} color="#061414" />
+    <Text style={styles.sectionTitle}>TOP Rivais</Text>
+    <View style={{ flex: 1 }} />
+    {rivals.length > 0 && <Ionicons name="chevron-forward" size={18} color="#999" />}
+</TouchableOpacity>
+
+{rivals.length === 0 ? (
+    <>
+        <Text style={styles.sectionSubtitle}>Suas batalhas obrigatórias
+            Recupere território ou amplie sua vantagem.</Text>
+        <Text style={styles.sectionSubtitleLast}>
+            Ainda não são rivais, mas assim que você roubar o território de alguém ou eles roubarem o seu, isso aparecerá aqui
+        </Text>
+    </>
+) : (
+    <View style={{ marginBottom: 8 }}>
+        {rivals.slice(0, 2).map((rival) => (
+            <RivalCard key={rival.id} rival={rival} yourColor={YOUR_COLOR} compact />
+        ))}
+    </View>
+)}
+
                     <Text style={styles.sectionSubtitle}>Suas batalhas obrigatórias
                         Recupere território ou amplie sua vantagem.</Text>
                     <Text style={styles.sectionSubtitleLast}>

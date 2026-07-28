@@ -37,10 +37,13 @@ export type RootStackParamList = {
         crewName: string;
         inviteCode: string;
     };
+    
 };
 
 export type BottomTabsParamList = {
   Home: undefined;
   Social: undefined;
   Progress: undefined;
+  Leadboard: undefined;
+  
 };

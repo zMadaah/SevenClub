@@ -11,12 +11,11 @@ import Home from '../screens/Home';
 import Social from '../screens/Social';
 import Profile from '../screens/Profile';
 import Progress from '../screens/Progress';
+import Leaderboard from '../screens/Leaderboard';
 
 import { colors } from '../theme/colors';
 
 import { BottomTabsParamList, RootStackParamList } from './types';
-
-
 
 const Tab = createBottomTabNavigator<BottomTabsParamList>();
 
@@ -60,6 +59,9 @@ export default function BottomTabs() {
                             case 'Progress':
                                 icon = 'bar-chart-outline';
                                 break;
+                            case 'Leaderboard':
+                                icon = 'trophy-outline';
+                                break;
                         }
                         return <Ionicons name={icon as any} size={size} color={color} />;
                     },
@@ -79,6 +81,21 @@ export default function BottomTabs() {
                 />
 
                 <Tab.Screen name="Social" component={Social} options={{ title: 'Social' }} />
+
+                <Tab.Screen
+                    name="Leaderboard"
+                    component={Leaderboard}
+                    options={{ title: 'Rank' }}
+                    listeners={{
+                        tabPress: (e) => {
+                            // impede a troca de aba de verdade — o Leaderboard não
+                            // vira uma aba com estado próprio, ele é empurrado no
+                            // Stack de fora, então mantém o header com "voltar"
+                            e.preventDefault();
+                            navigation.navigate('Leaderboard');
+                        },
+                    }}
+                />
             </Tab.Navigator>
 
             {activeTab === 'Home' && (
