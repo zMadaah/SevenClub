@@ -37,7 +37,7 @@ export default function OtpCodeInput({ length = 6, onChangeCode }: OtpCodeInputP
         return (
           <TextInput
             key={index}
-            ref={(ref) => (inputRefs.current[index] = ref)}
+            ref={(ref) => { inputRefs.current[index] = ref; }}
             style={[styles.box, isActive && styles.boxActive]}
             value={digit}
             onChangeText={(text) => handleChangeDigit(text, index)}

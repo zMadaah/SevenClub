@@ -1,8 +1,10 @@
 import React, { useMemo, useState } from 'react';
 import { View, Text, TouchableOpacity } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
+import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { Ionicons } from '@expo/vector-icons';
 
+import { RootStackParamList } from '../../navigation/types';
 import Map from '../../Map';
 
 import { useActivityTracker } from '../../hooks/useActivityTracker';
@@ -26,7 +28,7 @@ import { colors } from '../../theme/colors';
 import { styles } from './styles';
 
 export default function ActivityStart() {
-  const navigation = useNavigation();
+  const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
   const tracker = useActivityTracker();
 
   const [summaryVisible, setSummaryVisible] = useState(false);

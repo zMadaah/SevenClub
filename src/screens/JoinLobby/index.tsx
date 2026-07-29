@@ -71,7 +71,7 @@ export default function JoinLobby() {
             return (
               <TextInput
                 key={index}
-                ref={(ref) => (inputRefs.current[index] = ref)}
+                ref={(ref) => { inputRefs.current[index] = ref; }}
                 style={[styles.codeBox, isActive && styles.codeBoxActive]}
                 value={digit}
                 onChangeText={(text) => handleChangeDigit(text, index)}

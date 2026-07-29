@@ -7,13 +7,13 @@ export type RootStackParamList = {
     CreatePassword: { contact: string };
     ForgotPassword: undefined;
     NewPassword: { contact: string };
-    Main: undefined;
+    Main: NavigatorScreenParams<BottomTabsParamList> | undefined;
     Profile: undefined;
     Private: undefined;
     ActivityStart: undefined;
     RoutePlan: undefined;
-    JoinLobby:undefined;
-    CreateLobby:undefined;
+    JoinLobby: undefined;
+    CreateLobby: undefined;
     LobbyConfirmed: {
         lobbyId: string;
         lobbyName: string;
@@ -25,10 +25,10 @@ export type RootStackParamList = {
     SupportChat: undefined;
     MyStats: undefined;
     ViewHistory: undefined;
-    Notifcations: undefined;
+    Notifications: undefined;
     ManageNotifications: undefined;
     ViewTerritories: undefined;
-    ViewActivity: undefined;
+    ViewActivities: undefined;
     Crew: undefined;
     CreateCrew: undefined;
     JoinCrew: undefined;
@@ -37,13 +37,16 @@ export type RootStackParamList = {
         crewName: string;
         inviteCode: string;
     };
-    
+    Leaderboard: undefined;
+    Rivals: undefined;
+    MapVisibility: undefined;
+    ProfileVisibility: undefined;
+    BlockedUsers: undefined;
 };
 
 export type BottomTabsParamList = {
   Home: undefined;
   Social: undefined;
   Progress: undefined;
-  Leadboard: undefined;
-  
+  Leaderboard: undefined;
 };

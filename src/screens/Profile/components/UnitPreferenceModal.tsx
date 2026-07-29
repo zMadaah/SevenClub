@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Modal, View, Text, TouchableOpacity } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 
-import { UnitSystem } from '../../../types/preferences';
+import { UnitSystem } from '../../../types/preference';
 import { styles } from './UnitPreferenceModal.styles';
 
 interface UnitPreferenceModalProps {

@@ -35,6 +35,9 @@ import ViewTerritories from '../screens/ViewTerritories';
 import ViewActivities from '../screens/ViewActivities';
 import Leaderboard from '../screens/Leaderboard';
 import Rivals from '../screens/Rivals';
+import MapVisibility from '../screens/MapVisibility';
+import ProfileVisibility from '../screens/ProfileVisibility';
+import BlockedUsers from '../screens/BlockedUsers';
 
 
 
@@ -77,6 +80,9 @@ function RootNavigator() {
           <Stack.Screen name="ViewActivities" component={ViewActivities} />
           <Stack.Screen name="Leaderboard" component={Leaderboard} />
           <Stack.Screen name="Rivals" component={Rivals} />
+          <Stack.Screen name="MapVisibility" component={MapVisibility} />
+          <Stack.Screen name="ProfileVisibility" component={ProfileVisibility} />
+          <Stack.Screen name="BlockedUsers" component={BlockedUsers} />
         </>
       ) : (
         <>

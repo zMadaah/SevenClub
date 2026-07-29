@@ -4,9 +4,17 @@ import Modal from 'react-native-modal';
 import { Ionicons } from '@expo/vector-icons';
 
 import { colors } from '../theme/colors';
+import { ActivityMode } from './types';
+
+interface ActivitySelectorProps {
+  visible: boolean;
+  selected: ActivityMode;
+  onClose: () => void;
+  onSelect: (value: ActivityMode) => void;
+}
 
 export default function ActivitySelector({
-    visible, selected, onClose, onSelect}: any) {
+    visible, selected, onClose, onSelect}: ActivitySelectorProps) {
 
     return (
         <Modal

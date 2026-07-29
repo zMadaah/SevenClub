@@ -9,6 +9,7 @@ import { RootStackParamList } from '../../navigation/types';
 import { useAuth } from '../../contexts/AuthContext'
   ;
 import UnitPreferenceModal from './components/UnitPreferenceModal';
+import AnonymousModeModal from './components/AnonymousModeModal';
 import { UnitSystem } from '../../types/preference';
 
 import { styles } from './styles';
@@ -21,14 +22,24 @@ export default function Profile() {
   const [plansExpanded, setPlansExpanded] = useState(false);
   const [anonymousMode, setAnonymousMode] = useState(false);
   const [unitModalVisible, setUnitModalVisible] = useState(false);
+  const [anonymousModalVisible, setAnonymousModalVisible] = useState(false);
   const [supportExpanded, setSupportExpanded] = useState(false);
   const { logout } = useAuth();
 
   const unitLabel = unitSystem === 'metric' ? 'Quilômetros e metros' : 'Milhas e pés';
 
-  function handleManagePrivacy(section: string) {
-    // TODO: navegar para a tela real assim que existir
-    Alert.alert('Em breve', `Gerenciamento de "${section}" ainda não está disponível.`);
+  function handleToggleAnonymous() {
+    if (anonymousMode) {
+      // desligar não precisa de confirmação, só ligar exige entender o aviso primeiro
+      setAnonymousMode(false);
+      return;
+    }
+    setAnonymousModalVisible(true);
+  }
+
+  function handleConfirmAnonymous() {
+    setAnonymousMode(true);
+    setAnonymousModalVisible(false);
   }
 
   function handleRemoveTerraData() {
@@ -177,7 +188,7 @@ export default function Profile() {
               <Text style={styles.settingLabel}>Modo anônimo</Text>
               <TouchableOpacity
                 style={[styles.privacyToggle, anonymousMode && styles.privacyToggleOn]}
-                onPress={() => setAnonymousMode((prev) => !prev)}
+                onPress={handleToggleAnonymous}
               >
                 <View style={[styles.privacyToggleThumb, anonymousMode && styles.privacyToggleThumbOn]} />
               </TouchableOpacity>
@@ -185,21 +196,21 @@ export default function Profile() {
 
             <View style={styles.settingRow}>
               <Text style={styles.settingLabel}>Visibilidade do mapa</Text>
-              <TouchableOpacity onPress={() => handleManagePrivacy('Visibilidade do mapa')}>
+              <TouchableOpacity onPress={() => navigation.navigate('MapVisibility')}>
                 <Text style={styles.settingValue}>Gerenciar</Text>
               </TouchableOpacity>
             </View>
 
             <View style={styles.settingRow}>
               <Text style={styles.settingLabel}>Visibilidade do perfil</Text>
-              <TouchableOpacity onPress={() => handleManagePrivacy('Visibilidade do perfil')}>
+              <TouchableOpacity onPress={() => navigation.navigate('ProfileVisibility')}>
                 <Text style={styles.settingValue}>Gerenciar</Text>
               </TouchableOpacity>
             </View>
 
             <View style={styles.settingRow}>
               <Text style={styles.settingLabel}>Usuários bloqueados</Text>
-              <TouchableOpacity onPress={() => handleManagePrivacy('Usuários bloqueados')}>
+              <TouchableOpacity onPress={() => navigation.navigate('BlockedUsers')}>
                 <Text style={styles.settingValue}>Gerenciar</Text>
               </TouchableOpacity>
             </View>
@@ -291,6 +302,12 @@ export default function Profile() {
         onClose={() => setUnitModalVisible(false)}
         value={unitSystem}
         onSave={setUnitSystem}
+      />
+
+      <AnonymousModeModal
+        visible={anonymousModalVisible}
+        onClose={() => setAnonymousModalVisible(false)}
+        onConfirm={handleConfirmAnonymous}
       />
 
     </ScrollView>

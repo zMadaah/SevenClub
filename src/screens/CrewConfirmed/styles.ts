@@ -27,7 +27,7 @@ export const styles = StyleSheet.create({
     fontSize: 32,
     fontWeight: '800',
     fontStyle: 'italic',
-    color: colors.secondaryLight,
+    color: colors.laurelLeaf,
     textAlign: 'center',
     textTransform: 'uppercase',
     lineHeight: 34,
@@ -54,7 +54,7 @@ export const styles = StyleSheet.create({
   sectionDescription: { fontSize: 13, color: colors.textMuted, marginBottom: 14 },
   sectionSpacing: { height: 28 },
   card: {
-    backgroundColor: colors.secondaryPale,
+    backgroundColor: colors.background,
     borderRadius: 18,
     padding: 16,
     flexDirection: 'row',
@@ -65,7 +65,7 @@ export const styles = StyleSheet.create({
   code: { fontSize: 26, fontWeight: '800', color: colors.textPrimary, letterSpacing: 1, flexShrink: 1 },
   link: { fontSize: 14, fontWeight: '600', color: colors.textPrimary, flex: 1 },
   actionButton: {
-    backgroundColor: colors.secondaryPaleAlt,
+    backgroundColor: colors.backgroundAlt,
     borderRadius: 14,
     paddingVertical: 12,
     paddingHorizontal: 16,

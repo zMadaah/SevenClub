@@ -35,23 +35,23 @@ export const styles = StyleSheet.create({
     color: '#D85A30',
     marginBottom: 12,
   },
-  createButton: {
+  resetButton: {
     backgroundColor: colors.accent,
     paddingVertical: 16,
     borderRadius: 999,
     alignItems: 'center',
     marginTop: 8,
   },
-  createButtonDisabled: {
+  resetButtonDisabled: {
     backgroundColor: colors.disabledBg,
   },
-  createText: {
+  resetText: {
     fontSize: 14,
     fontWeight: '800',
     color: colors.richBlack,
     letterSpacing: 0.5,
   },
-  createTextDisabled: {
+  resetTextDisabled: {
     color: colors.disabledText,
   },
 });
