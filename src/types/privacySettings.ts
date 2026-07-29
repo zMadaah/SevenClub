@@ -1,5 +1,5 @@
 export type MapVisibility = 'everyone' | 'crew' | 'nobody';
-export type ProfileVisibility = 'public' | 'followers' | 'private';
+export type ProfileVisibility = 'public' | 'followers' ;
 
 export interface BlockedUser {
   id: string;

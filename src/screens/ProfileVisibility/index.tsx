@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { View, Text, TouchableOpacity } from 'react-native';
+import { View, Text, TouchableOpacity, ScrollView } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useNavigation } from '@react-navigation/native';
 
@@ -10,24 +10,21 @@ import { styles } from './styles';
 const OPTIONS: { value: ProfileVisibilityValue; label: string; description: string }[] = [
   {
     value: 'public',
-    label: 'Público',
-    description: 'Qualquer pessoa pode ver seu perfil, atividades e territórios',
+    label: 'Todos',
+    description:
+      'Qualquer pessoa no app pode te seguir sem precisar de aprovação, e pode ver suas atividades públicas e quem você segue.',
   },
   {
     value: 'followers',
-    label: 'Somente seguidores',
-    description: 'Só quem te segue vê seu perfil completo',
-  },
-  {
-    value: 'private',
-    label: 'Privado',
-    description: 'Ninguém vê seu perfil, atividades ou territórios',
+    label: 'Seguidores',
+    description:
+      'Quem já te segue pode ver suas corridas públicas, informações do perfil e quem você segue. Outras pessoas precisam enviar um pedido de solicitação para te seguir.',
   },
 ];
 
 export default function ProfileVisibility() {
   const navigation = useNavigation();
-  const [selected, setSelected] = useState<ProfileVisibilityValue>('public');
+  const [selected, setSelected] = useState<ProfileVisibilityValue>('followers');
 
   return (
     <View style={styles.container}>
@@ -38,12 +35,14 @@ export default function ProfileVisibility() {
         >
           <Ionicons name="chevron-back" size={20} color={colors.textPrimary} />
         </TouchableOpacity>
-        <Text style={styles.headerTitle}>VISIBILIDADE DO PERFIL</Text>
+        <Text style={styles.headerTitle}>PRIVACIDADE DO PERFIL</Text>
       </View>
 
-      <View style={styles.content}>
-        <Text style={styles.subtitle}>
-          Escolha quem pode ver seu perfil, suas atividades e seus territórios.
+      <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
+        <Text style={styles.intro}>
+          Seu perfil mostra informações suas para outros usuários. Seu nome e
+          foto de perfil sempre ficam visíveis, mas você pode mudar quem vê
+          quem você segue e se as pessoas podem te seguir sem aprovação.
         </Text>
 
         {OPTIONS.map((option) => {
@@ -51,7 +50,7 @@ export default function ProfileVisibility() {
           return (
             <TouchableOpacity
               key={option.value}
-              style={[styles.optionRow, isSelected && styles.optionRowActive]}
+              style={[styles.optionCard, isSelected && styles.optionCardActive]}
               onPress={() => setSelected(option.value)}
               activeOpacity={0.8}
             >
@@ -66,7 +65,7 @@ export default function ProfileVisibility() {
             </TouchableOpacity>
           );
         })}
-      </View>
+      </ScrollView>
     </View>
   );
 }
