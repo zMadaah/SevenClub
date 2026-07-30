@@ -19,6 +19,7 @@ export interface TerritoryEntry {
   runnerAvatarUrl: string;
   location: string;
   countryFlag: string;
+  countryCode: string;
   countryRank: number;
   globalRank: number;
   distanceKm: number;

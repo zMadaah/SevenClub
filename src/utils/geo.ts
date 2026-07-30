@@ -49,3 +49,69 @@ export function isLoopClosed(points: LatLng[], toleranceMeters = 25): boolean {
   if (points.length < 3) return false;
   return haversineDistance(points[0], points[points.length - 1]) <= toleranceMeters;
 }
+
+const toDeg = (rad: number) => (rad * 180) / Math.PI;
+
+// Direção (0-360°) de A para B — usado pra apontar a câmera "pra frente"
+// durante o replay/sobrevoo do recap
+export function bearingBetween(a: LatLng, b: LatLng): number {
+  const lat1 = toRad(a.latitude);
+  const lat2 = toRad(b.latitude);
+  const dLon = toRad(b.longitude - a.longitude);
+
+  const y = Math.sin(dLon) * Math.cos(lat2);
+  const x = Math.cos(lat1) * Math.sin(lat2) - Math.sin(lat1) * Math.cos(lat2) * Math.cos(dLon);
+
+  return (toDeg(Math.atan2(y, x)) + 360) % 360;
+}
+
+export interface PathState {
+  current: LatLng;
+  heading: number;
+  revealedPoints: LatLng[];
+}
+
+// Dado um progresso de 0 a 1, calcula: a posição exata ao longo do
+// caminho (interpolada por distância percorrida, não por índice — assim
+// a velocidade do "voo" fica constante mesmo com pontos irregulares),
+// a direção pra onde a câmera deve apontar, e o trecho já percorrido
+// (pra desenhar a linha progressivamente)
+export function getPathState(points: LatLng[], progress: number): PathState {
+  const clamped = Math.min(Math.max(progress, 0), 1);
+
+  if (points.length < 2) {
+    return { current: points[0], heading: 0, revealedPoints: points };
+  }
+
+  const cumulative: number[] = [0];
+  for (let i = 1; i < points.length; i++) {
+    cumulative.push(cumulative[i - 1] + haversineDistance(points[i - 1], points[i]));
+  }
+  const total = cumulative[cumulative.length - 1];
+  const targetDistance = total * clamped;
+
+  let segmentIndex = 0;
+  while (
+    segmentIndex < cumulative.length - 2 &&
+    cumulative[segmentIndex + 1] < targetDistance
+  ) {
+    segmentIndex++;
+  }
+
+  const segStart = points[segmentIndex];
+  const segEnd = points[segmentIndex + 1] ?? segStart;
+  const segStartDist = cumulative[segmentIndex];
+  const segLength = haversineDistance(segStart, segEnd) || 1;
+  const segProgress = Math.min(Math.max((targetDistance - segStartDist) / segLength, 0), 1);
+
+  const current: LatLng = {
+    latitude: segStart.latitude + (segEnd.latitude - segStart.latitude) * segProgress,
+    longitude: segStart.longitude + (segEnd.longitude - segStart.longitude) * segProgress,
+  };
+
+  return {
+    current,
+    heading: bearingBetween(segStart, segEnd),
+    revealedPoints: [...points.slice(0, segmentIndex + 1), current],
+  };
+}

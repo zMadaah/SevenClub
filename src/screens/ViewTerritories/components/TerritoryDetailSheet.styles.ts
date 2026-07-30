@@ -52,15 +52,34 @@ export const styles = StyleSheet.create({
     alignItems: 'center',
     backgroundColor: colors.richBlack,
     borderRadius: 18,
-    paddingVertical: 16,
-    paddingHorizontal: 20,
+    height: 76,
+    overflow: 'hidden',
     marginBottom: 20,
   },
-  rankCardBlock: {
-    flex: 1,
-    alignItems: 'center',
-    gap: 2,
+  rankFlag: {
+    width: 72,
+    height: '100%',
   },
+  rankContent: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingHorizontal: 12,
+  },
+
+  rankCardBlock: {
+    alignItems: 'flex-start',
+  },
+   rankCardRightGroup: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+  },
+   rankGlobeIcon: {
+    marginTop: 4,
+  },
+
   rankCardFlag: {
     fontSize: 18,
     marginBottom: 2,
@@ -70,6 +89,11 @@ export const styles = StyleSheet.create({
     fontWeight: '800',
     fontStyle: 'italic',
     color: '#fff',
+  },
+   rankCardHash: {
+    fontSize: 14,
+    fontWeight: '500',
+    fontStyle: 'normal',
   },
   rankCardLabel: {
     fontSize: 10,

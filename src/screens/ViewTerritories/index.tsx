@@ -6,6 +6,7 @@ import MapView, { Polygon } from 'react-native-maps';
 
 
 import TerritoryDetailSheet from './components/TerritoryDetailSheet';
+import RecapModal from './components/RecapModal';
 import { MOCK_TERRITORIES, MOCK_USER_TERRITORY_COLOR } from '../../services/mock/territories';
 import { darkMapStyle } from '../../Map/darkMapStyle';
 import { ActivityType } from '../../types/lobby';
@@ -16,6 +17,7 @@ export default function ViewTerritories() {
   const navigation = useNavigation();
   const [activityType, setActivityType] = useState<ActivityType>('ride');
   const [liked, setLiked] = useState(false);
+  const [recapVisible, setRecapVisible] = useState(false);
 
   const territory = useMemo(() => MOCK_TERRITORIES[activityType][0] ?? null, [activityType]);
 
@@ -28,7 +30,7 @@ export default function ViewTerritories() {
   }
 
   function handleViewRecap() {
-    Alert.alert('Em breve', 'O recap dessa atividade ainda não está disponível.');
+    setRecapVisible(true);
   }
 
   const captureLabel =
@@ -123,6 +125,14 @@ export default function ViewTerritories() {
           onToggleLike={() => setLiked((prev) => !prev)}
           onFlagRide={handleFlagRide}
           onViewRecap={handleViewRecap}
+        />
+      )}
+
+      {territory && (
+        <RecapModal
+          visible={recapVisible}
+          onClose={() => setRecapVisible(false)}
+          territory={territory}
         />
       )}
     </View>

@@ -43,21 +43,34 @@ export default function TerritoryDetailSheet({
           </View>
         </View>
 
-        <View style={styles.rankCard}>
-          <View style={styles.rankCardBlock}>
-            <Text style={styles.rankCardFlag}>{territory.countryFlag}</Text>
-            <Text style={styles.rankCardValue}>#{territory.countryRank}</Text>
-            <Text style={styles.rankCardLabel}>País</Text>
-          </View>
+         <View style={styles.rankCard}>
+          <Image
+            source={{ uri: `https://flagcdn.com/w160/${territory.countryCode}.png` }}
+            style={styles.rankFlag}
+          />
 
-          <Text style={styles.rankCardCenterLabel}>RANK</Text>
+          <View style={styles.rankContent}>
+            <View style={styles.rankCardBlock}>
+              <Text style={styles.rankCardValue}>
+                <Text style={styles.rankCardHash}>#</Text>
+                {territory.countryRank.toLocaleString('pt-BR')}
+              </Text>
+              <Text style={styles.rankCardLabel}>País</Text>
+            </View>
 
-          <View style={styles.rankCardBlock}>
-            <Text style={styles.rankCardValue}>
-              #{territory.globalRank.toLocaleString('pt-BR')}
-            </Text>
-            <Text style={styles.rankCardLabel}>Global</Text>
-            <Ionicons name="earth" size={16} color={colors.accent} />
+            <Text style={styles.rankCardCenterLabel}>RANK</Text>
+
+            <View style={styles.rankCardRightGroup}>
+              <View style={styles.rankCardBlock}>
+                <Text style={styles.rankCardValue}>
+                  <Text style={styles.rankCardHash}>#</Text>
+                  {territory.globalRank.toLocaleString('pt-BR')}
+                </Text>
+                <Text style={styles.rankCardLabel}>Global</Text>
+              </View>
+
+              <Ionicons name="earth" size={20} color={colors.accent} style={styles.rankGlobeIcon} />
+            </View>
           </View>
         </View>
 
@@ -90,9 +103,9 @@ export default function TerritoryDetailSheet({
             <Text style={styles.activityDescription}>{territory.activityDescription}</Text>
           </View>
 
-          <TouchableOpacity hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
+          {/* <TouchableOpacity hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
             <Ionicons name="create-outline" size={20} color={colors.textPrimary} />
-          </TouchableOpacity>
+          </TouchableOpacity> */}
         </View>
 
         <View style={styles.routeMapCard}>
@@ -119,7 +132,7 @@ export default function TerritoryDetailSheet({
           </MapView>
         </View>
 
-        <View style={styles.socialRow}>
+        {/* <View style={styles.socialRow}>
           <TouchableOpacity onPress={onToggleLike} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
             <Ionicons
               name={liked ? 'heart' : 'heart-outline'}
@@ -131,7 +144,7 @@ export default function TerritoryDetailSheet({
           <TouchableOpacity hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
             <Ionicons name="chatbubble-outline" size={20} color={colors.textPrimary} />
           </TouchableOpacity>
-        </View>
+        </View> */}
 
         <TouchableOpacity style={styles.recapButton} onPress={onViewRecap}>
           <Ionicons name="play" size={16} color={colors.richBlack} />
@@ -142,10 +155,10 @@ export default function TerritoryDetailSheet({
 
         <View style={styles.chartHeader}>
           <Text style={styles.chartTitle}>Velocidade média</Text>
-          <TouchableOpacity style={styles.flagButton} onPress={onFlagRide}>
+          {/* <TouchableOpacity style={styles.flagButton} onPress={onFlagRide}>
             <Ionicons name="flag-outline" size={13} color={colors.textSecondary} />
             <Text style={styles.flagButtonText}>SINALIZAR</Text>
-          </TouchableOpacity>
+          </TouchableOpacity> */}
         </View>
 
         <DraggableLineChart

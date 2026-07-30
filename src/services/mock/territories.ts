@@ -63,6 +63,7 @@ export const MOCK_TERRITORIES: Record<ActivityType, TerritoryEntry[]> = {
       runnerAvatarUrl: 'https://i.pravatar.cc/200?img=10',
       location: 'Brasília, Brasil',
       countryFlag: '🇧🇷',
+      countryCode: 'br',
       countryRank: 59,
       globalRank: 8549,
       distanceKm: 2.1,

@@ -10,7 +10,7 @@ import RivalCard from '../../components/RivalCard';
 import { MOCK_CHALLENGES, MOCK_COMPETITIONS } from '../../services/mock/progress';
 import { MOCK_RIVALS, YOUR_COLOR } from '../../services/mock/rivals';
 
-const TABS = ['Progresso', 'Atividades', 'Território'];
+const TABS = ['Progresso', 'Atividades',];
 
 export default function Progress() {
     const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
@@ -53,10 +53,10 @@ export default function Progress() {
                                         navigation.navigate('ViewActivities');
                                         return;
                                     }
-                                    if (tab === 'Território') {
-                                        navigation.navigate('Leaderboard');
-                                        return;
-                                    }
+                                    // if (tab === 'Território') {
+                                    //     navigation.navigate('Leaderboard');
+                                    //     return;
+                                    // }
                                     setActiveTab(tab);
                                 }}
                             >
@@ -157,31 +157,31 @@ export default function Progress() {
                     </ScrollView>
 
                     <TouchableOpacity
-    style={styles.sectionHeader}
-    onPress={() => navigation.navigate('Rivals')}
-    activeOpacity={0.7}
->
-    <MaterialCommunityIcons name="sword-cross" size={16} color="#061414" />
-    <Text style={styles.sectionTitle}>TOP Rivais</Text>
-    <View style={{ flex: 1 }} />
-    {rivals.length > 0 && <Ionicons name="chevron-forward" size={18} color="#999" />}
-</TouchableOpacity>
+                        style={styles.sectionHeader}
+                        onPress={() => navigation.navigate('Rivals')}
+                        activeOpacity={0.7}
+                    >
+                        <MaterialCommunityIcons name="sword-cross" size={16} color="#061414" />
+                        <Text style={styles.sectionTitle}>TOP Rivais</Text>
+                        <View style={{ flex: 1 }} />
+                        {rivals.length > 0 && <Ionicons name="chevron-forward" size={18} color="#999" />}
+                    </TouchableOpacity>
 
-{rivals.length === 0 ? (
-    <>
-        <Text style={styles.sectionSubtitle}>Suas batalhas obrigatórias
-            Recupere território ou amplie sua vantagem.</Text>
-        <Text style={styles.sectionSubtitleLast}>
-            Ainda não são rivais, mas assim que você roubar o território de alguém ou eles roubarem o seu, isso aparecerá aqui
-        </Text>
-    </>
-) : (
-    <View style={{ marginBottom: 8 }}>
-        {rivals.slice(0, 2).map((rival) => (
-            <RivalCard key={rival.id} rival={rival} yourColor={YOUR_COLOR} compact />
-        ))}
-    </View>
-)}
+                    {rivals.length === 0 ? (
+                        <>
+                            <Text style={styles.sectionSubtitle}>Suas batalhas obrigatórias
+                                Recupere território ou amplie sua vantagem.</Text>
+                            <Text style={styles.sectionSubtitleLast}>
+                                Ainda não são rivais, mas assim que você roubar o território de alguém ou eles roubarem o seu, isso aparecerá aqui
+                            </Text>
+                        </>
+                    ) : (
+                        <View style={{ marginBottom: 8 }}>
+                            {rivals.slice(0, 2).map((rival) => (
+                                <RivalCard key={rival.id} rival={rival} yourColor={YOUR_COLOR} compact />
+                            ))}
+                        </View>
+                    )}
 
                     <Text style={styles.sectionSubtitle}>Suas batalhas obrigatórias
                         Recupere território ou amplie sua vantagem.</Text>
