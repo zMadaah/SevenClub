@@ -35,87 +35,77 @@ export const styles = StyleSheet.create({
     fontWeight: '600',
     color: colors.textPrimary,
   },
-  toggleRow: {
+  scopeRow: {
     flexDirection: 'row',
-    justifyContent: 'center',
-    gap: 12,
-    paddingVertical: 16,
-    borderBottomWidth: 1,
-    borderBottomColor: colors.border,
+    paddingHorizontal: 16,
+    paddingVertical: 14,
+    gap: 8,
   },
-  togglePill: {
-    paddingHorizontal: 20,
-    paddingVertical: 10,
+  scopePill: {
+    flex: 1,
+    alignItems: 'center',
+    paddingVertical: 8,
     borderRadius: 20,
   },
-  togglePillActive: {
+  scopePillActive: {
     backgroundColor: colors.accentGlowStrong,
   },
-  toggleText: {
-    fontSize: 14,
+  scopeText: {
+    fontSize: 12,
     fontWeight: '600',
     color: colors.textSecondary,
   },
-  toggleTextActive: {
-    color: colors.textPrimary,
-    fontWeight: '700',
-  },
-  list: {
-    paddingHorizontal: 16,
-    paddingTop: 8,
-  },
-  separator: {
-    height: 1,
-    backgroundColor: colors.border,
-  },
-  row: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 12,
-    paddingVertical: 14,
-    paddingHorizontal: 8,
-    borderRadius: 12,
-  },
-  rowCurrentUser: {
-    backgroundColor: colors.accentGlow,
-  },
-  rank: {
-    width: 24,
-    textAlign: 'center',
-    fontSize: 14,
-    fontWeight: '700',
-    color: colors.textSecondary,
-  },
-  rankTop3: {
+  scopeTextActive: {
     color: colors.textPrimary,
     fontWeight: '800',
   },
-  avatar: {
-    width: 40,
-    height: 40,
+  scrollContent: {
+    paddingBottom: 24,
+  },
+  podiumRow: {
+    flexDirection: 'row',
+    alignItems: 'flex-end',
+    paddingHorizontal: 20,
+    paddingTop: 12,
+    paddingBottom: 4,
+    gap: 4,
+  },
+  listCard: {
+    backgroundColor: colors.surface,
     borderRadius: 20,
+    marginHorizontal: 16,
+    marginTop: 16,
+    marginBottom: 28,
+    paddingVertical: 6,
+    overflow: 'hidden',
   },
-  rowInfo: {
-    flex: 1,
+  blurWrapper: {
+    position: 'relative',
   },
-  name: {
-    fontSize: 14,
-    fontWeight: '600',
-    color: colors.textPrimary,
-    marginBottom: 2,
+  blurScrim: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    backgroundColor: 'rgba(233, 235, 230, 0.96)',
   },
-  location: {
+  blurLabel: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 6,
+  },
+  blurText: {
     fontSize: 12,
-  },
-  territoryValue: {
-    fontSize: 15,
     fontWeight: '700',
     color: colors.textPrimary,
-  },
-  territoryUnit: {
-    fontSize: 11,
-    fontWeight: '600',
-    color: colors.textSecondary,
+    textAlign: 'center',
+    paddingHorizontal: 30,
   },
   emptyState: {
     flex: 1,
@@ -134,13 +124,13 @@ export const styles = StyleSheet.create({
     fontSize: 13,
     color: colors.textMuted,
     textAlign: 'center',
-    marginBottom: 16,
   },
   emptyButton: {
     backgroundColor: colors.richBlack,
     paddingHorizontal: 24,
     paddingVertical: 14,
     borderRadius: 999,
+    marginTop: 12,
   },
   emptyButtonText: {
     fontSize: 13,
