@@ -7,20 +7,26 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { RootStackParamList } from '../../navigation/types';
 import {
-  MOCK_WORLD_LEADERBOARD,
+  MOCK_CREW_LEADERBOARD,
+  MOCK_COUNTRY_POOL,
   MOCK_AREA_LEADERBOARD,
   MOCK_MY_RANK,
+  MOCK_MY_CREW_RANK,
   USER_COUNTRY_NAME,
   USER_COUNTRY_CODE,
 } from '../../services/mock/leaderboard';
-import { LeaderboardEntry, Scope } from '../../types/leaderboard';
+import { LeaderboardEntry, MyRankEntry, Scope } from '../../types/leaderboard';
 import { ActivityType } from '../../types/lobby';
+import { useActiveCrew } from '../../contexts/ActiveCrewContext';
 import { colors } from '../../theme/colors';
 import { styles } from './styles';
 
 import PodiumSpot from './components/PodiumSpot';
 import LeaderboardRow from './components/LeaderboardRow';
 import MyRankRow from './components/MyRankRow';
+
+const FALLBACK_CREW_PICTURE =
+  'https://images.unsplash.com/photo-1552674605-db6ffd4facb5?w=200';
 
 function reRank(entries: LeaderboardEntry[]): LeaderboardEntry[] {
   return [...entries]
@@ -31,24 +37,45 @@ function reRank(entries: LeaderboardEntry[]): LeaderboardEntry[] {
 export default function Leaderboard() {
   const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
   const insets = useSafeAreaInsets();
+  const { activeCrew } = useActiveCrew();
   const [activityType, setActivityType] = useState<ActivityType>('run');
-  const [scope, setScope] = useState<Scope>('world');
+  const [scope, setScope] = useState<Scope>('crew');
 
-  const worldList = MOCK_WORLD_LEADERBOARD[activityType];
+  const crewList = MOCK_CREW_LEADERBOARD[activityType];
+  const countryPool = MOCK_COUNTRY_POOL[activityType];
   const areaList = MOCK_AREA_LEADERBOARD[activityType];
 
   const visibleList = useMemo(() => {
-    if (scope === 'world') return worldList;
+    if (scope === 'crew') return crewList;
     if (scope === 'area') return areaList;
-    if (scope === 'country') return reRank(worldList.filter((e) => e.countryCode === USER_COUNTRY_CODE));
+    if (scope === 'country') return reRank(countryPool.filter((e) => e.countryCode === USER_COUNTRY_CODE));
     return []; // 'friends' — sem dado real ainda
-  }, [worldList, areaList, scope]);
+  }, [crewList, areaList, countryPool, scope]);
 
   const topThree = visibleList.slice(0, 3);
   const rest = visibleList.slice(3);
   const maxValue = topThree[0]?.territoryKm2 ?? 1;
 
-  const myRank = scope !== 'friends' ? MOCK_MY_RANK[activityType][scope] : null;
+  // "Seu crew" usa nome/foto do crew real (ActiveCrewContext) — só o
+  // número de posição é mock. Se o usuário não estiver em nenhum crew,
+  // não existe rank pra mostrar (vira um convite pra criar/entrar).
+  const myCrewRank: MyRankEntry | null = useMemo(() => {
+    if (!activeCrew) return null;
+    return {
+      rank: MOCK_MY_CREW_RANK[activityType],
+      name: activeCrew.name,
+      avatarUrl: activeCrew.pictureUri ?? FALLBACK_CREW_PICTURE,
+      countryFlag: '🇧🇷',
+      territoryKm2: 0,
+    };
+  }, [activeCrew, activityType]);
+
+  let myRank: MyRankEntry | null = null;
+  if (scope === 'crew') {
+    myRank = myCrewRank;
+  } else if (scope === 'country' || scope === 'area') {
+    myRank = MOCK_MY_RANK[activityType][scope];
+  }
 
   function toggleActivityType() {
     setActivityType((prev) => (prev === 'run' ? 'ride' : 'run'));
@@ -57,7 +84,7 @@ export default function Leaderboard() {
   const SCOPE_TABS: { value: Scope; label: string }[] = [
     { value: 'area', label: 'Área' },
     { value: 'country', label: USER_COUNTRY_NAME },
-    { value: 'world', label: 'Mundo' },
+    { value: 'crew', label: 'Crew' },
     { value: 'friends', label: 'Amigos' },
   ];
 
@@ -71,7 +98,7 @@ export default function Leaderboard() {
           <Ionicons name="chevron-back" size={20} color={colors.textPrimary} />
         </TouchableOpacity>
 
-        <Text style={styles.headerTitle}>LEADERBOARD</Text>
+        <Text style={styles.headerTitle}>Ranking</Text>
 
         <TouchableOpacity style={styles.activityPill} onPress={toggleActivityType}>
           <MaterialCommunityIcons
@@ -154,7 +181,7 @@ export default function Leaderboard() {
             )}
           </View>
 
-          {myRank && <MyRankRow myRank={myRank} />}
+           {myRank && <MyRankRow myRank={myRank} />}
         </ScrollView>
       )}
     </View>

@@ -1,6 +1,6 @@
 import { ActivityType } from './lobby';
 
-export type Scope = 'area' | 'country' | 'world' | 'friends';
+export type Scope = 'area' | 'country' | 'crew' | 'friends';
 
 export interface LeaderboardEntry {
   id: string;
