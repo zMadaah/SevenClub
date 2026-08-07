@@ -14,10 +14,10 @@ interface ActivitySelectorProps {
 }
 
 export default function ActivitySelector({
-    visible, selected, onClose, onSelect}: ActivitySelectorProps) {
+  visible, selected, onClose, onSelect }: ActivitySelectorProps) {
 
-    return (
-        <Modal
+  return (
+    <Modal
       isVisible={visible}
       onBackdropPress={onClose}
       style={{
@@ -47,7 +47,7 @@ export default function ActivitySelector({
           </Text>
 
           <TouchableOpacity onPress={onClose}>
-            <Ionicons  name="close"  size={23} color={colors.textSecondary}/>
+            <Ionicons name="close" size={23} color={colors.textSecondary} />
           </TouchableOpacity>
         </View>
 
@@ -63,7 +63,7 @@ export default function ActivitySelector({
             borderColor: colors.textSecondary,
           }}
         >
-          <Text style={{ fontSize: 16, color: colors.textOnDark}}>
+          <Text style={{ fontSize: 16, color: colors.textOnDark }}>
             Corrida
           </Text>
 
@@ -91,7 +91,7 @@ export default function ActivitySelector({
             borderColor: '#d2d3ce',
           }}
         >
-          <Text style={{ fontSize: 16, color: colors.textOnDark}}>
+          <Text style={{ fontSize: 16, color: colors.textOnDark }}>
             Ciclismo
           </Text>
 
@@ -130,5 +130,5 @@ export default function ActivitySelector({
         </TouchableOpacity> */}
       </View>
     </Modal>
-    )
+  )
 }
