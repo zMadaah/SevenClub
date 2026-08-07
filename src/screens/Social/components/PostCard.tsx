@@ -3,6 +3,8 @@ import {  View,  Text,  Image,  TouchableOpacity,  ScrollView,  NativeSyntheticE
 import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
 
 import { FeedPost } from '../../../types/post';
+import { useComments } from '../../../contexts/CommentsContext';
+import CommentsModal from './CommentsModal';
 import { styles } from './PostCard.styles';
 
 interface PostCardProps {
@@ -15,6 +17,18 @@ const PHOTO_WIDTH = SCREEN_WIDTH - CARD_HORIZONTAL_PADDING;
 
 export default function PostCard({ post }: PostCardProps) {
   const [activePhoto, setActivePhoto] = useState(0);
+  const [liked, setLiked] = useState(false);
+  const [likeCount, setLikeCount] = useState(post.likes);
+  const [commentsVisible, setCommentsVisible] = useState(false);
+
+  const { getComments } = useComments();
+  const commentCount = getComments(post.id).length;
+
+  function handleToggleLike() {
+    // TODO: trocar por chamada real em services/api.ts assim que existir
+    setLiked((prev) => !prev);
+    setLikeCount((prev) => (liked ? prev - 1 : prev + 1));
+  }
 
   function handleScroll(e: NativeSyntheticEvent<NativeScrollEvent>) {
     const index = Math.round(e.nativeEvent.contentOffset.x / PHOTO_WIDTH);
@@ -100,16 +114,26 @@ export default function PostCard({ post }: PostCardProps) {
       )}
 
       <View style={styles.footer}>
-        <TouchableOpacity style={styles.footerAction}>
-          <Ionicons name="heart-outline" size={20} color="#111" />
-          <Text style={styles.footerCount}>{post.likes}</Text>
+        <TouchableOpacity style={styles.footerAction} onPress={handleToggleLike}>
+          <Ionicons
+            name={liked ? 'heart' : 'heart-outline'}
+            size={20}
+            color={liked ? '#D85A30' : '#111'}
+          />
+          <Text style={styles.footerCount}>{likeCount}</Text>
         </TouchableOpacity>
 
-        <TouchableOpacity style={styles.footerAction}>
+        <TouchableOpacity style={styles.footerAction} onPress={() => setCommentsVisible(true)}>
           <Ionicons name="chatbubble-outline" size={18} color="#111" />
-          <Text style={styles.footerCount}>{post.comments}</Text>
+          <Text style={styles.footerCount}>{commentCount}</Text>
         </TouchableOpacity>
       </View>
+
+      <CommentsModal
+        visible={commentsVisible}
+        onClose={() => setCommentsVisible(false)}
+        postId={post.id}
+      />
     </View>
   );
 }
