@@ -1,21 +1,32 @@
 import React, { useMemo, useState } from 'react';
-import { View, Text, Image, TouchableOpacity, FlatList } from 'react-native';
+import { View, Text, ScrollView, TouchableOpacity } from 'react-native';
 import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
 import { useNavigation } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { RootStackParamList } from '../../navigation/types';
-import { MOCK_GLOBAL_LEADERBOARD } from '../../services/mock/leaderboard';
-import { LeaderboardEntry } from '../../types/leaderboard';
+import {
+  MOCK_CREW_LEADERBOARD,
+  MOCK_COUNTRY_POOL,
+  MOCK_AREA_LEADERBOARD,
+  MOCK_MY_RANK,
+  MOCK_MY_CREW_RANK,
+  USER_COUNTRY_NAME,
+  USER_COUNTRY_CODE,
+} from '../../services/mock/leaderboard';
+import { LeaderboardEntry, MyRankEntry, Scope } from '../../types/leaderboard';
 import { ActivityType } from '../../types/lobby';
+import { useActiveCrew } from '../../contexts/ActiveCrewContext';
 import { colors } from '../../theme/colors';
 import { styles } from './styles';
 
-type Scope = 'global' | 'country' | 'friends';
+import PodiumSpot from './components/PodiumSpot';
+import LeaderboardRow from './components/LeaderboardRow';
+import MyRankRow from './components/MyRankRow';
 
-// TODO: trocar '0 seguidos' por dado real de AddFriend/services/api.ts
-// assim que a relação de "quem eu sigo" existir compartilhada entre telas
-const FOLLOWED_COUNT = 0;
+const FALLBACK_CREW_PICTURE =
+  'https://images.unsplash.com/photo-1552674605-db6ffd4facb5?w=200';
 
 function reRank(entries: LeaderboardEntry[]): LeaderboardEntry[] {
   return [...entries]
@@ -25,20 +36,57 @@ function reRank(entries: LeaderboardEntry[]): LeaderboardEntry[] {
 
 export default function Leaderboard() {
   const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
+  const insets = useSafeAreaInsets();
+  const { activeCrew } = useActiveCrew();
   const [activityType, setActivityType] = useState<ActivityType>('run');
-  const [scope, setScope] = useState<Scope>('global');
+  const [scope, setScope] = useState<Scope>('crew');
 
-  const baseList = MOCK_GLOBAL_LEADERBOARD[activityType];
+  const crewList = MOCK_CREW_LEADERBOARD[activityType];
+  const countryPool = MOCK_COUNTRY_POOL[activityType];
+  const areaList = MOCK_AREA_LEADERBOARD[activityType];
 
   const visibleList = useMemo(() => {
-    if (scope === 'global') return baseList;
-    if (scope === 'country') return reRank(baseList.filter((e) => e.countryCode === 'BR'));
+    if (scope === 'crew') return crewList;
+    if (scope === 'area') return areaList;
+    if (scope === 'country') return reRank(countryPool.filter((e) => e.countryCode === USER_COUNTRY_CODE));
     return []; // 'friends' — sem dado real ainda
-  }, [baseList, scope]);
+  }, [crewList, areaList, countryPool, scope]);
+
+  const topThree = visibleList.slice(0, 3);
+  const rest = visibleList.slice(3);
+  const maxValue = topThree[0]?.territoryKm2 ?? 1;
+
+  // "Seu crew" usa nome/foto do crew real (ActiveCrewContext) — só o
+  // número de posição é mock. Se o usuário não estiver em nenhum crew,
+  // não existe rank pra mostrar (vira um convite pra criar/entrar).
+  const myCrewRank: MyRankEntry | null = useMemo(() => {
+    if (!activeCrew) return null;
+    return {
+      rank: MOCK_MY_CREW_RANK[activityType],
+      name: activeCrew.name,
+      avatarUrl: activeCrew.pictureUri ?? FALLBACK_CREW_PICTURE,
+      countryFlag: '🇧🇷',
+      territoryKm2: 0,
+    };
+  }, [activeCrew, activityType]);
+
+  let myRank: MyRankEntry | null = null;
+  if (scope === 'crew') {
+    myRank = myCrewRank;
+  } else if (scope === 'country' || scope === 'area') {
+    myRank = MOCK_MY_RANK[activityType][scope];
+  }
 
   function toggleActivityType() {
     setActivityType((prev) => (prev === 'run' ? 'ride' : 'run'));
   }
+
+  const SCOPE_TABS: { value: Scope; label: string }[] = [
+    { value: 'area', label: 'Área' },
+    { value: 'country', label: USER_COUNTRY_NAME },
+    { value: 'crew', label: 'Crew' },
+    { value: 'friends', label: 'Amigos' },
+  ];
 
   return (
     <View style={styles.container}>
@@ -50,7 +98,7 @@ export default function Leaderboard() {
           <Ionicons name="chevron-back" size={20} color={colors.textPrimary} />
         </TouchableOpacity>
 
-        <Text style={styles.headerTitle}>LEADERBOARD</Text>
+        <Text style={styles.headerTitle}>Ranking</Text>
 
         <TouchableOpacity style={styles.activityPill} onPress={toggleActivityType}>
           <MaterialCommunityIcons
@@ -65,33 +113,21 @@ export default function Leaderboard() {
         </TouchableOpacity>
       </View>
 
-      <View style={styles.toggleRow}>
-        <TouchableOpacity
-          style={[styles.togglePill, scope === 'global' && styles.togglePillActive]}
-          onPress={() => setScope('global')}
-        >
-          <Text style={[styles.toggleText, scope === 'global' && styles.toggleTextActive]}>
-            Global
-          </Text>
-        </TouchableOpacity>
-
-        <TouchableOpacity
-          style={[styles.togglePill, scope === 'country' && styles.togglePillActive]}
-          onPress={() => setScope('country')}
-        >
-          <Text style={[styles.toggleText, scope === 'country' && styles.toggleTextActive]}>
-            País
-          </Text>
-        </TouchableOpacity>
-
-        <TouchableOpacity
-          style={[styles.togglePill, scope === 'friends' && styles.togglePillActive]}
-          onPress={() => setScope('friends')}
-        >
-          <Text style={[styles.toggleText, scope === 'friends' && styles.toggleTextActive]}>
-            Amigos
-          </Text>
-        </TouchableOpacity>
+      <View style={styles.scopeRow}>
+        {SCOPE_TABS.map((tab) => {
+          const active = tab.value === scope;
+          return (
+            <TouchableOpacity
+              key={tab.value}
+              style={[styles.scopePill, active && styles.scopePillActive]}
+              onPress={() => setScope(tab.value)}
+            >
+              <Text style={[styles.scopeText, active && styles.scopeTextActive]} numberOfLines={1}>
+                {tab.label}
+              </Text>
+            </TouchableOpacity>
+          );
+        })}
       </View>
 
       {scope === 'friends' ? (
@@ -109,37 +145,44 @@ export default function Leaderboard() {
           </TouchableOpacity>
         </View>
       ) : (
-        <FlatList
-          data={visibleList}
-          keyExtractor={(item) => item.id}
-          contentContainerStyle={styles.list}
-          ItemSeparatorComponent={() => <View style={styles.separator} />}
-          renderItem={({ item }) => (
-            <View style={[styles.row, item.isCurrentUser && styles.rowCurrentUser]}>
-              <Text
-                style={[
-                  styles.rank,
-                  item.rank <= 3 && styles.rankTop3,
-                ]}
-              >
-                {item.rank}
-              </Text>
-
-              <Image source={{ uri: item.avatarUrl }} style={styles.avatar} />
-
-              <View style={styles.rowInfo}>
-                <Text style={styles.name} numberOfLines={1}>
-                  {item.isCurrentUser ? 'Você' : item.name}
-                </Text>
-                <Text style={styles.location}>{item.countryFlag}</Text>
-              </View>
-
-              <Text style={styles.territoryValue}>
-                {item.territoryKm2.toFixed(1)} <Text style={styles.territoryUnit}>km²</Text>
-              </Text>
+        <ScrollView
+          showsVerticalScrollIndicator={false}
+          contentContainerStyle={[styles.scrollContent, { paddingBottom: 24 + insets.bottom }]}
+        >
+          {topThree.length === 3 && (
+            <View style={styles.podiumRow}>
+              <PodiumSpot entry={topThree[1]} place={2} maxValue={maxValue} />
+              <PodiumSpot entry={topThree[0]} place={1} maxValue={maxValue} />
+              <PodiumSpot entry={topThree[2]} place={3} maxValue={maxValue} />
             </View>
           )}
-        />
+
+          <View style={styles.listCard}>
+            {topThree.map((entry) => (
+              <LeaderboardRow key={entry.id} entry={entry} />
+            ))}
+
+            {rest.length > 0 && (
+              <View style={styles.blurWrapper}>
+                <View pointerEvents="none">
+                  {rest.map((entry) => (
+                    <LeaderboardRow key={entry.id} entry={entry} />
+                  ))}
+                </View>
+
+                {/* Camada sólida — não depende de nenhum módulo nativo, sempre funciona */}
+                <View style={styles.blurScrim} pointerEvents="none" />
+
+                <View style={styles.blurLabel} pointerEvents="none">
+                  <Ionicons name="lock-closed" size={18} color={colors.textPrimary} />
+                  <Text style={styles.blurText}>Assine o Pro para ver o ranking completo</Text>
+                </View>
+              </View>
+            )}
+          </View>
+
+           {myRank && <MyRankRow myRank={myRank} />}
+        </ScrollView>
       )}
     </View>
   );

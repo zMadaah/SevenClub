@@ -140,6 +140,18 @@ export const styles = StyleSheet.create({
     marginBottom: 4,
     marginTop: 8,
   },
+  seasonPill: {
+    backgroundColor: '#061414',
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    borderRadius: 12,
+  },
+  seasonPillText: {
+    fontSize: 10,
+    fontWeight: '700',
+    color: '#BCFF00',
+    letterSpacing: 0.3,
+  },
   sectionTitle: {
     fontSize: 20,
     fontWeight: '800',

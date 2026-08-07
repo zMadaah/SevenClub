@@ -46,6 +46,7 @@ import { ActiveLobbyProvider } from '../contexts/ActiveLobbyContext';
 import { SavedRoutesProvider } from '../contexts/SavedRoutesContext';
 import { AuthProvider, useAuth } from '../contexts/AuthContext';
 import { ActiveCrewProvider } from '../contexts/ActiveCrewContext';
+import { FeaturedBadgeProvider } from '../contexts/FeaturedBadgeContext';
 
 const Stack = createNativeStackNavigator<RootStackParamList>();
 
@@ -103,11 +104,13 @@ export default function Navigation() {
     <AuthProvider>
       <ActiveLobbyProvider>
         <ActiveCrewProvider>
+          <FeaturedBadgeProvider>
           <SavedRoutesProvider>
             <NavigationContainer>
               <RootNavigator />
             </NavigationContainer>
           </SavedRoutesProvider>
+          </FeaturedBadgeProvider>
         </ActiveCrewProvider>
       </ActiveLobbyProvider>
     </AuthProvider>

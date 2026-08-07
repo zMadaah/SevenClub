@@ -5,6 +5,9 @@ const palette = {
   laurelLeaf: '#96998C',
   celeste: '#D2D3CE',
   ceilingWhite: '#E9EBE6',
+  pear2:'#bcff00',
+  blue:'#00bcff',
+  pink:'#ff00bc',
 } as const;
 
 export const colors = {
@@ -18,8 +21,9 @@ export const colors = {
   backgroundlaurelLeaf:palette.laurelLeaf,
 
   // Marca
-  accent: palette.pear,
-  secondary: palette.laurelLeaf,
+  accent: palette.pear2,
+  secondary: palette.blue,
+  thirdy: palette.pink,
 
   // Texto
   textPrimary: palette.richBlack,

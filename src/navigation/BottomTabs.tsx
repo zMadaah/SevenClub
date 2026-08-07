@@ -51,13 +51,13 @@ export default function BottomTabs() {
                         let icon: keyof typeof Ionicons.glyphMap;
                         switch (route.name) {
                             case 'Home':
-                                icon = 'walk';
+                                icon = 'home-sharp';
                                 break;
                             case 'Social':
                                 icon = 'people-outline';
                                 break;
                             case 'Progress':
-                                icon = 'bar-chart-outline';
+                                icon = 'trending-up';
                                 break;
                             case 'Leaderboard':
                                 icon = 'trophy-outline';
@@ -74,7 +74,7 @@ export default function BottomTabs() {
                         title: 'Mapa',
                         tabBarIcon: () => (
                             <View style={styles.centerTabIcon}>
-                                <FontAwesome5 name="location-arrow" size={32} color={colors.backgroundDark} />
+                                <Ionicons name="home-sharp" size={22} color={colors.backgroundDark} />
                             </View>
                         ),
                     }}

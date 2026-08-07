@@ -1,5 +1,6 @@
 import React from 'react';
 import { View } from 'react-native';
+import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { SafeAreaProvider, SafeAreaView } from 'react-native-safe-area-context';
 
 import Navigation from './src/navigation';
@@ -9,8 +10,10 @@ export default function App() {
 
   return (
 
-    <SafeAreaProvider>
-      <Navigation />
-    </SafeAreaProvider>
+    <GestureHandlerRootView style={{ flex: 1 }}>
+      <SafeAreaProvider>
+        <Navigation />
+      </SafeAreaProvider>
+    </GestureHandlerRootView>
   );
 }

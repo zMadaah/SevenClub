@@ -7,14 +7,22 @@ import { RootStackParamList } from '../../navigation/types';
 import { styles } from './styles';
 
 import RivalCard from '../../components/RivalCard';
-import { MOCK_CHALLENGES, MOCK_COMPETITIONS } from '../../services/mock/progress';
+import BadgeCard from './components/BadgeCard';
+import BadgeDetailModal from './components/BadgeDetailModal';
+import { MOCK_CHALLENGES } from '../../services/mock/progress';
 import { MOCK_RIVALS, YOUR_COLOR } from '../../services/mock/rivals';
+import { getBadgesWithStatus } from '../../services/mock/badges';
+import { CURRENT_SEASON } from '../../services/mock/seasons';
+import { BadgeWithStatus } from '../../types/badge';
+import { useFeaturedBadge } from '../../contexts/FeaturedBadgeContext';
 
 const TABS = ['Progresso', 'Atividades',];
 
 export default function Progress() {
     const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
     const [activeTab, setActiveTab] = useState('Progresso');
+    const [selectedBadge, setSelectedBadge] = useState<BadgeWithStatus | null>(null);
+    const { featuredBadgeId, setFeaturedBadgeId } = useFeaturedBadge();
 
     const level = 0;
     const exp = 0;
@@ -26,6 +34,7 @@ export default function Progress() {
 
     const expProgress = Math.min(exp / expTarget, 1) * 100;
     const rivals = MOCK_RIVALS.run;
+    const badges = getBadgesWithStatus();
 
     return (
         <View style={styles.container}>
@@ -183,34 +192,45 @@ export default function Progress() {
                         </View>
                     )}
 
-                    <Text style={styles.sectionSubtitle}>Suas batalhas obrigatórias
-                        Recupere território ou amplie sua vantagem.</Text>
+                    <View style={styles.sectionHeader}>
+                        <Ionicons name="medal-outline" size={22} color="#111" />
+                        <Text style={styles.sectionTitle}>Insígnias</Text>
+                        <View style={{ flex: 1 }} />
+                        <View style={styles.seasonPill}>
+                            <Text style={styles.seasonPillText}>{CURRENT_SEASON.name}</Text>
+                        </View>
+                    </View>
+                    <Text style={styles.sectionSubtitle}>
+                        Cada desafio concluído desbloqueia uma conquista.
+                    </Text>
                     <Text style={styles.sectionSubtitleLast}>
-                        Ainda não são rivais, mas assim que você roubar o território de alguém ou eles roubarem o seu, isso aparecerá aqui
+                        Toque numa insígnia desbloqueada pra usá-la como capa do seu perfil — a conquista reinicia a cada nova temporada.
                     </Text>
 
-                    {/* <View style={styles.sectionHeader}>
-                        <Ionicons name="trophy-outline" size={22} color="#111" />
-                        <Text style={styles.sectionTitle}>Competições</Text>
-                    </View>
-                    <Text style={styles.sectionSubtitle}>Envie participações para ganhar prêmios.</Text>
-                    <Text style={styles.sectionSubtitleLast}>
-                        Mais participações = mais chances de ganhar.
-                    </Text> */}
-
-                    {/* <ScrollView
+                    <ScrollView
                         horizontal
                         showsHorizontalScrollIndicator={false}
                         contentContainerStyle={styles.competitionsRow}
                     >
-                        {MOCK_COMPETITIONS.map((item) => (
-                            <TouchableOpacity key={item.id} style={styles.competitionAvatar}>
-                                <Image source={{ uri: item.imageUrl }} style={styles.competitionAvatarImage} />
-                            </TouchableOpacity>
+                        {badges.map((badge) => (
+                            <BadgeCard key={badge.id} badge={badge} onPress={() => setSelectedBadge(badge)} />
                         ))}
-                    </ScrollView> */}
+                    </ScrollView>
                 </View>
             </ScrollView>
+
+            <BadgeDetailModal
+                visible={!!selectedBadge}
+                onClose={() => setSelectedBadge(null)}
+                badge={selectedBadge}
+                isFeatured={!!selectedBadge && selectedBadge.id === featuredBadgeId}
+                onSetFeatured={() => {
+                    if (!selectedBadge) return;
+                    setFeaturedBadgeId(
+                        featuredBadgeId === selectedBadge.id ? null : selectedBadge.id
+                    );
+                }}
+            />
         </View>
     );
 }
