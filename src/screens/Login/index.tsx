@@ -76,10 +76,10 @@ export default function Login() {
           <Text style={styles.socialButtonText}>Continuar com Apple</Text>
         </TouchableOpacity>
 
-        <TouchableOpacity style={styles.socialButton} onPress={() => handleSocialLogin('Strava')}>
+        {/* <TouchableOpacity style={styles.socialButton} onPress={() => handleSocialLogin('Strava')}>
           <MaterialCommunityIcons name="run" size={20} color={colors.textPrimary} />
           <Text style={styles.socialButtonText}>Continuar com Strava</Text>
-        </TouchableOpacity>
+        </TouchableOpacity> */}
 
 
 

@@ -31,6 +31,12 @@ export const styles = StyleSheet.create({
   publishTextDisabled: {
     color: colors.textMuted,
   },
+  body: {
+    flex: 1,
+  },
+  bodyContent: {
+    paddingBottom: 40,
+  },
   photoArea: {
     marginHorizontal: 20,
     marginTop: 20,
@@ -53,20 +59,49 @@ export const styles = StyleSheet.create({
     fontSize: 13,
     color: colors.textMuted,
   },
-  changePhotoButton: {
-    alignSelf: 'center',
-    marginTop: 10,
+  thumbnailRow: {
+    marginTop: 12,
   },
-  changePhotoText: {
-    fontSize: 13,
-    fontWeight: '700',
-    color: colors.textSecondary,
-    textDecorationLine: 'underline',
+  thumbnailRowContent: {
+    paddingHorizontal: 20,
+    gap: 10,
+  },
+  thumbnailWrapper: {
+    width: 64,
+    height: 64,
+    borderRadius: 12,
+    overflow: 'hidden',
+  },
+  thumbnail: {
+    width: '100%',
+    height: '100%',
+  },
+  thumbnailRemove: {
+    position: 'absolute',
+    top: 4,
+    right: 4,
+    width: 18,
+    height: 18,
+    borderRadius: 9,
+    backgroundColor: 'rgba(6, 20, 20, 0.75)',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  thumbnailAdd: {
+    width: 64,
+    height: 64,
+    borderRadius: 12,
+    backgroundColor: colors.backgroundAlt,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   captionInput: {
     marginHorizontal: 20,
     marginTop: 20,
-    minHeight: 90,
+    minHeight: 100,
+    borderRadius: 16,
+    backgroundColor: colors.backgroundAlt,
+    padding: 16,
     fontSize: 14,
     color: colors.textPrimary,
     textAlignVertical: 'top',

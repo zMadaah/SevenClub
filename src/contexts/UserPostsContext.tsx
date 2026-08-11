@@ -8,7 +8,7 @@ import {
 } from '../constants/currentUser';
 
 interface NewPostInput {
-  photoUri: string;
+  photoUris: string[];
   caption: string;
 }
 
@@ -22,10 +22,10 @@ const UserPostsContext = createContext<UserPostsContextValue | undefined>(undefi
 export function UserPostsProvider({ children }: { children: ReactNode }) {
   const [userPosts, setUserPosts] = useState<FeedPost[]>([]);
 
-  function addPost({ photoUri, caption }: NewPostInput) {
-    // TODO: antes de salvar de verdade, subir `photoUri` pro Storage
-    // (Firebase, no backend que já criamos) e usar a URL pública
-    // devolvida — hoje o post só existe na sessão local do device.
+  function addPost({ photoUris, caption }: NewPostInput) {
+    // TODO: antes de salvar de verdade, subir cada uri de `photoUris`
+    // pro Storage (Firebase, no backend que já criamos) e usar as URLs
+    // públicas devolvidas — hoje o post só existe na sessão local do device.
     const newPost: FeedPost = {
       id: `local-${Date.now()}`,
       runner: {
@@ -38,7 +38,7 @@ export function UserPostsProvider({ children }: { children: ReactNode }) {
       },
       createdAt: 'agora',
       caption: caption.length > 0 ? caption : undefined,
-      photos: [photoUri],
+      photos: photoUris,
       likes: 0,
       comments: 0,
       activityType: 'run' as ActivityType,

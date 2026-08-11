@@ -20,6 +20,7 @@ export interface FeedPost {
   durationLabel?: string;
   avgPaceLabel?: string;
   territoryKm2?: number;
+  globalRank?: number;
   likes: number;
   comments: number;
   activityType: ActivityType;

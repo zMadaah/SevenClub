@@ -124,7 +124,11 @@ export const styles = StyleSheet.create({
     borderRadius: 12,
     marginBottom: 10,
   },
+  territoryFlag: {
+    fontSize: 13,
+  },
   territoryLabel: {
+    textAlign:'center',
     fontSize: 11,
     fontWeight: '700',
     color: '#fff',

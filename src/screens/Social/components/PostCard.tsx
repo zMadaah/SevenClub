@@ -20,6 +20,7 @@ export default function PostCard({ post }: PostCardProps) {
   const [liked, setLiked] = useState(false);
   const [likeCount, setLikeCount] = useState(post.likes);
   const [commentsVisible, setCommentsVisible] = useState(false);
+  const [showRank, setShowRank] = useState(false);
 
   const { getComments } = useComments();
   const commentCount = getComments(post.id).length;
@@ -108,11 +109,25 @@ export default function PostCard({ post }: PostCardProps) {
       )}
 
       {post.territoryKm2 != null && (
-        <View style={styles.territoryPill}>
-          <MaterialCommunityIcons name="flag-variant" size={14} color="#BCFF00" />
-          <Text style={styles.territoryLabel}>território</Text>
-          <Text style={styles.territoryValue}>{post.territoryKm2.toFixed(1)} km²</Text>
-        </View>
+        <TouchableOpacity
+          style={styles.territoryPill}
+          onPress={() => setShowRank((prev) => !prev)}
+          activeOpacity={0.8}
+        >
+          {showRank && post.globalRank != null ? (
+            <>
+              <Text style={styles.territoryFlag}>{post.runner.countryFlag}</Text>
+              <Text style={styles.territoryLabel}>Rank</Text>
+              <Text style={styles.territoryValue}>#{post.globalRank.toLocaleString('pt-BR')}</Text>
+            </>
+          ) : (
+            <>
+              <MaterialCommunityIcons name="flag-variant" size={14} color="#BCFF00" />
+              <Text style={styles.territoryLabel}>território</Text>
+              <Text style={styles.territoryValue}>{post.territoryKm2.toFixed(1)} km²</Text>
+            </>
+          )}
+        </TouchableOpacity>
       )}
 
       <View style={styles.footer}>
