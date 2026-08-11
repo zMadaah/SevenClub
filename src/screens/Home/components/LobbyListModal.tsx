@@ -32,6 +32,7 @@ export default function LobbyListModal({
   function handleOpenSettings(lobby: Lobby) {
     // TODO: navegar pra tela de configurações do lobby quando existir
     Alert.alert('Em breve', `Configurações de "${lobby.name}" ainda não estão disponíveis.`);
+    // navigation.navigate('CreateLobby');
   }
 
   function handleNewPrivateGame() {

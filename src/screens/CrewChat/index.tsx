@@ -12,25 +12,25 @@ import {
 import { Ionicons } from '@expo/vector-icons';
 import { useNavigation } from '@react-navigation/native';
 
-import { useActiveLobby } from '../../contexts/ActiveLobbyContext';
+import { useActiveCrew } from '../../contexts/ActiveCrewContext';
 import { useGroupChat } from '../../contexts/GroupChatContext';
 import { CURRENT_USER_ID } from '../../constants/currentUser';
 import { styles } from './styles';
 
-export default function LobbyChat() {
+export default function CrewChat() {
   const navigation = useNavigation();
   const listRef = useRef<FlatList>(null);
-  const { activeLobby } = useActiveLobby();
+  const { activeCrew } = useActiveCrew();
   const { getMessages, addMessage } = useGroupChat();
 
-  const messages = activeLobby ? getMessages(activeLobby.id) : [];
+  const messages = activeCrew ? getMessages(activeCrew.id) : [];
   const [input, setInput] = useState('');
 
   function handleSend() {
     const text = input.trim();
-    if (text.length === 0 || !activeLobby) return;
+    if (text.length === 0 || !activeCrew) return;
 
-    addMessage(activeLobby.id, text);
+    addMessage(activeCrew.id, text);
     setInput('');
   }
 
@@ -44,7 +44,7 @@ export default function LobbyChat() {
         <TouchableOpacity onPress={() => navigation.goBack()}>
           <Ionicons name="chevron-back" size={22} color="#111" />
         </TouchableOpacity>
-        <Text style={styles.headerTitle}>{activeLobby?.name ?? 'Chat do lobby'}</Text>
+        <Text style={styles.headerTitle}>{activeCrew?.name ?? 'Chat do crew'}</Text>
         <View style={{ width: 22 }} />
       </View>
 

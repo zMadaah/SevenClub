@@ -35,7 +35,7 @@ export default function Home() {
         onNotificationPress={() => navigation.navigate('Notifications')}
       />
 
-      {activeLobby && (
+      {selectedCategory === 'private' && activeLobby && (
         <TouchableOpacity
           style={styles.lobbyPill}
           onPress={() => setLobbyModalVisible(true)}
@@ -48,7 +48,7 @@ export default function Home() {
         </TouchableOpacity>
       )}
 
-      {activeLobby?.inGameChatEnabled && (
+      {selectedCategory === 'private' && activeLobby?.inGameChatEnabled && (
         <TouchableOpacity
           style={styles.chatButton}
           onPress={() => navigation.navigate('LobbyChat')}
@@ -59,11 +59,16 @@ export default function Home() {
       )}
 
       {/* DEV: atalho só pra testar/visualizar a pill e o chat sem passar
-          pelo fluxo inteiro de criar lobby — remover antes de produção */}
+          pelo fluxo inteiro de criar lobby — remover antes de produção.
+          Já entra ativando o modo Private, senão a pill nasceria
+          escondida (a Home só mostra isso no modo Private de verdade). */}
       {!activeLobby && (
         <TouchableOpacity
           style={styles.devSeedButton}
-          onPress={() => setActiveLobby(MOCK_ACTIVE_LOBBY)}
+          onPress={() => {
+            setActiveLobby(MOCK_ACTIVE_LOBBY);
+            setSelectedCategory('private');
+          }}
         >
           <Ionicons name="flask-outline" size={12} color="#061414" />
           <Text style={styles.devSeedButtonText}>Carregar lobby de teste</Text>

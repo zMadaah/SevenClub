@@ -4,8 +4,9 @@ import { View, Text, Image, TouchableOpacity } from 'react-native';
 import { NavigationProp, useNavigation } from '@react-navigation/native';
 import { Ionicons } from '@expo/vector-icons';
 
-import { RootStackParamList } from '../../src/navigation/types';
-import { colors } from '../../src/theme/colors';
+import { RootStackParamList } from '../navigation/types';
+import { colors } from '../theme/colors';
+import { useActiveLobby } from '../contexts/ActiveLobbyContext';
 
 import ActivitySelector from './ActivitySelector';
 import { HomeHeaderProps } from './types';
@@ -22,6 +23,7 @@ export default function HomeHeader({
   onNotificationPress,
 }: HomeHeaderProps) {
   const [showActivity, setShowActivity] = useState(false);
+  const { activeLobby } = useActiveLobby();
 
   const navigation = useNavigation<NavigationProp<RootStackParamList>>();
 
@@ -54,7 +56,13 @@ export default function HomeHeader({
                   activeOpacity={0.8}
                   onPress={() => {
                     if (mode === 'private') {
-                      navigation.navigate('Private');
+                      if (activeLobby) {
+                        // já tem lobby ativo — fica no próprio mapa,
+                        // só alterna o modo (não navega pra outra tela)
+                        onCategoryChange(mode);
+                      } else {
+                        navigation.navigate('Private');
+                      }
                       return;
                     }
                     if (mode === 'crew') {

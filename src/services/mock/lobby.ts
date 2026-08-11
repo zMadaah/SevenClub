@@ -21,7 +21,7 @@ export const MOCK_MY_LOBBIES: Lobby[] = [
   },
   {
     id: 'mock-lobby-2',
-    name: 'Crew Manhã',
+    name: 'Grupo da Manhã',
     pictureUri: undefined,
     allowPreviousImports: true,
     allowMemberInvitations: true,
