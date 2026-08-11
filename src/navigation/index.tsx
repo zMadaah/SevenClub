@@ -39,6 +39,7 @@ import MapVisibility from '../screens/MapVisibility';
 import ProfileVisibility from '../screens/ProfileVisibility';
 import BlockedUsers from '../screens/BlockedUsers';
 import CreatePost from '../screens/CreatePost';
+import LobbyChat from '../screens/LobbyChat';
 
 
 
@@ -88,6 +89,7 @@ function RootNavigator() {
           <Stack.Screen name="ProfileVisibility" component={ProfileVisibility} />
           <Stack.Screen name="BlockedUsers" component={BlockedUsers} />
           <Stack.Screen name="CreatePost" component={CreatePost} options={{ presentation: 'modal' }} />
+          <Stack.Screen name="LobbyChat" component={LobbyChat} />
         </>
       ) : (
         <>

@@ -43,6 +43,7 @@ export type RootStackParamList = {
     ProfileVisibility: undefined;
     BlockedUsers: undefined;
     CreatePost: undefined;
+    LobbyChat: undefined;
 };
 
 export type BottomTabsParamList = {
