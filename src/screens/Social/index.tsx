@@ -1,11 +1,15 @@
 import React , { useMemo, useState }from 'react';
 import { View, Image, Text, TouchableOpacity, FlatList } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import { useNavigation } from '@react-navigation/native';
+import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 
+import { RootStackParamList } from '../../navigation/types';
 import PostCard from './components/PostCard';
 import FilterModal from './components/FilterModal';
 import { MOCK_FEED } from '../../services/mock/feed';
 import { styles } from './styles';
+
 import { FeedPost } from '../../types/post';
 
 type ExploreScope = 'explore' | 'groups' | 'following';
@@ -24,6 +28,7 @@ const ACTIVITY_OPTIONS = [
 ];
 
 export default function Social() {
+  const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
   const [exploreScope, setExploreScope] = useState<ExploreScope>('explore');
   const [activityFilter, setActivityFilter] = useState<ActivityFilter>('all');
   const [exploreModalVisible, setExploreModalVisible] = useState(false);
@@ -63,12 +68,12 @@ export default function Social() {
           </TouchableOpacity>
         </View>
 
-        <TouchableOpacity style={styles.iconButton}>
+        {/* <TouchableOpacity style={styles.iconButton}>
           <Ionicons name="search" size={20} color="#111" />
-        </TouchableOpacity>
+        </TouchableOpacity> */}
 
-        <TouchableOpacity style={styles.iconButton}>
-          <Ionicons name="notifications-outline" size={20} color="#111" />
+        <TouchableOpacity style={styles.iconButton} onPress={() => navigation.navigate('CreatePost')}>
+          <Ionicons name="add-circle-outline" size={20} color="#111" />
         </TouchableOpacity>
       </View>
 

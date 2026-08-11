@@ -38,6 +38,7 @@ import Rivals from '../screens/Rivals';
 import MapVisibility from '../screens/MapVisibility';
 import ProfileVisibility from '../screens/ProfileVisibility';
 import BlockedUsers from '../screens/BlockedUsers';
+import CreatePost from '../screens/CreatePost';
 
 
 
@@ -48,6 +49,7 @@ import { AuthProvider, useAuth } from '../contexts/AuthContext';
 import { ActiveCrewProvider } from '../contexts/ActiveCrewContext';
 import { FeaturedBadgeProvider } from '../contexts/FeaturedBadgeContext';
 import { CommentsProvider } from '../contexts/CommentsContext';
+import { UserPostsProvider } from '../contexts/UserPostsContext';
 
 const Stack = createNativeStackNavigator<RootStackParamList>();
 
@@ -85,6 +87,7 @@ function RootNavigator() {
           <Stack.Screen name="MapVisibility" component={MapVisibility} />
           <Stack.Screen name="ProfileVisibility" component={ProfileVisibility} />
           <Stack.Screen name="BlockedUsers" component={BlockedUsers} />
+          <Stack.Screen name="CreatePost" component={CreatePost} options={{ presentation: 'modal' }} />
         </>
       ) : (
         <>
@@ -107,12 +110,13 @@ export default function Navigation() {
         <ActiveCrewProvider>
           <FeaturedBadgeProvider>
             <CommentsProvider>
-              <SavedRoutesProvider>
-                <NavigationContainer>
-                  <RootNavigator />
-                </NavigationContainer>
-              </SavedRoutesProvider>
-
+              <UserPostsProvider>
+                <SavedRoutesProvider>
+                  <NavigationContainer>
+                    <RootNavigator />
+                  </NavigationContainer>
+                </SavedRoutesProvider>
+              </UserPostsProvider>
             </CommentsProvider>
           </FeaturedBadgeProvider>
         </ActiveCrewProvider>

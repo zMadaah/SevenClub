@@ -57,7 +57,7 @@ export default function PostCard({ post }: PostCardProps) {
         </TouchableOpacity>
       </View>
 
-      <Text style={styles.title}>{post.title}</Text>
+      {post.title ? <Text style={styles.title}>{post.title}</Text> : null}
       {post.caption ? <Text style={styles.caption}>{post.caption}</Text> : null}
 
       {post.photos.length > 0 && (
@@ -84,26 +84,28 @@ export default function PostCard({ post }: PostCardProps) {
         </View>
       )}
 
-      <View style={styles.statsRow}>
-        <View style={styles.statBlock}>
-          <Text style={styles.statLabel}>distância</Text>
-          <Text style={styles.statValue}>
-            {post.distanceKm.toFixed(2)} <Text style={styles.statUnit}>km</Text>
-          </Text>
-        </View>
+      {post.distanceKm != null && (
+        <View style={styles.statsRow}>
+          <View style={styles.statBlock}>
+            <Text style={styles.statLabel}>distância</Text>
+            <Text style={styles.statValue}>
+              {post.distanceKm.toFixed(2)} <Text style={styles.statUnit}>km</Text>
+            </Text>
+          </View>
 
-        <View style={styles.statBlock}>
-          <Text style={styles.statLabel}>duração</Text>
-          <Text style={styles.statValue}>{post.durationLabel}</Text>
-        </View>
+          <View style={styles.statBlock}>
+            <Text style={styles.statLabel}>duração</Text>
+            <Text style={styles.statValue}>{post.durationLabel}</Text>
+          </View>
 
-        <View style={styles.statBlock}>
-          <Text style={styles.statLabel}>ritmo médio</Text>
-          <Text style={styles.statValue}>
-            {post.avgPaceLabel} <Text style={styles.statUnit}>/km</Text>
-          </Text>
+          <View style={styles.statBlock}>
+            <Text style={styles.statLabel}>ritmo médio</Text>
+            <Text style={styles.statValue}>
+              {post.avgPaceLabel} <Text style={styles.statUnit}>/km</Text>
+            </Text>
+          </View>
         </View>
-      </View>
+      )}
 
       {post.territoryKm2 != null && (
         <View style={styles.territoryPill}>

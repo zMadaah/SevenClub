@@ -42,6 +42,7 @@ export type RootStackParamList = {
     MapVisibility: undefined;
     ProfileVisibility: undefined;
     BlockedUsers: undefined;
+    CreatePost: undefined;
 };
 
 export type BottomTabsParamList = {
