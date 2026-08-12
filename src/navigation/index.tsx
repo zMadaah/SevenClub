@@ -39,6 +39,8 @@ import MapVisibility from '../screens/MapVisibility';
 import ProfileVisibility from '../screens/ProfileVisibility';
 import BlockedUsers from '../screens/BlockedUsers';
 import CreatePost from '../screens/CreatePost';
+import LobbyChat from '../screens/LobbyChat';
+import CrewChat from '../screens/CrewChat';
 
 
 
@@ -50,6 +52,9 @@ import { ActiveCrewProvider } from '../contexts/ActiveCrewContext';
 import { FeaturedBadgeProvider } from '../contexts/FeaturedBadgeContext';
 import { CommentsProvider } from '../contexts/CommentsContext';
 import { UserPostsProvider } from '../contexts/UserPostsContext';
+import { GameModeProvider } from '../contexts/GameModeContext';
+import { GroupChatProvider } from '../contexts/GroupChatContext';
+import { MyLobbiesProvider } from '../contexts/MyLobbiesContext';
 
 const Stack = createNativeStackNavigator<RootStackParamList>();
 
@@ -88,6 +93,8 @@ function RootNavigator() {
           <Stack.Screen name="ProfileVisibility" component={ProfileVisibility} />
           <Stack.Screen name="BlockedUsers" component={BlockedUsers} />
           <Stack.Screen name="CreatePost" component={CreatePost} options={{ presentation: 'modal' }} />
+          <Stack.Screen name="LobbyChat" component={LobbyChat} />
+          <Stack.Screen name="CrewChat" component={CrewChat} />
         </>
       ) : (
         <>
@@ -108,17 +115,23 @@ export default function Navigation() {
     <AuthProvider>
       <ActiveLobbyProvider>
         <ActiveCrewProvider>
-          <FeaturedBadgeProvider>
-            <CommentsProvider>
-              <UserPostsProvider>
-                <SavedRoutesProvider>
-                  <NavigationContainer>
-                    <RootNavigator />
-                  </NavigationContainer>
-                </SavedRoutesProvider>
-              </UserPostsProvider>
-            </CommentsProvider>
-          </FeaturedBadgeProvider>
+          <GameModeProvider>
+            <GroupChatProvider>
+              <MyLobbiesProvider>
+                <FeaturedBadgeProvider>
+                  <CommentsProvider>
+                    <UserPostsProvider>
+                      <SavedRoutesProvider>
+                        <NavigationContainer>
+                          <RootNavigator />
+                        </NavigationContainer>
+                      </SavedRoutesProvider>
+                    </UserPostsProvider>
+                  </CommentsProvider>
+                </FeaturedBadgeProvider>
+              </MyLobbiesProvider>
+            </GroupChatProvider>
+          </GameModeProvider>
         </ActiveCrewProvider>
       </ActiveLobbyProvider>
     </AuthProvider>

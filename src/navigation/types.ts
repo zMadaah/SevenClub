@@ -13,7 +13,7 @@ export type RootStackParamList = {
     ActivityStart: undefined;
     RoutePlan: undefined;
     JoinLobby: undefined;
-    CreateLobby: undefined;
+    CreateLobby: { lobbyId?: string } | undefined;
     LobbyConfirmed: {
         lobbyId: string;
         lobbyName: string;
@@ -43,6 +43,8 @@ export type RootStackParamList = {
     ProfileVisibility: undefined;
     BlockedUsers: undefined;
     CreatePost: undefined;
+    LobbyChat: undefined;
+    CrewChat: undefined;
 };
 
 export type BottomTabsParamList = {

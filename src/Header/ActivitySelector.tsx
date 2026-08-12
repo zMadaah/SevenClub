@@ -27,7 +27,7 @@ export default function ActivitySelector({
     >
       <View
         style={{
-          backgroundColor: colors.backgroundDark,
+          backgroundColor: colors.background,
           borderTopLeftRadius: 24,
           borderTopRightRadius: 24,
           padding: 24,
@@ -42,12 +42,12 @@ export default function ActivitySelector({
             marginBottom: 24,
           }}
         >
-          <Text style={{ color: colors.textSecondary, fontSize: 20, fontWeight: '700', }}>
+          <Text style={{ color: colors.textPrimary, fontSize: 20, fontWeight: '700', }}>
             Escolha sua modalidade
           </Text>
 
           <TouchableOpacity onPress={onClose}>
-            <Ionicons name="close" size={23} color={colors.textSecondary} />
+            <Ionicons name="close" size={23} color={colors.textPrimary} />
           </TouchableOpacity>
         </View>
 
@@ -59,11 +59,10 @@ export default function ActivitySelector({
             justifyContent: 'space-between',
             alignItems: 'center',
             paddingVertical: 18,
-            borderTopWidth: 1,
-            borderColor: colors.textSecondary,
+            
           }}
         >
-          <Text style={{ fontSize: 16, color: colors.textOnDark }}>
+          <Text style={{ fontSize: 16, color: colors.textOnAccent }}>
             Corrida
           </Text>
 
@@ -86,12 +85,10 @@ export default function ActivitySelector({
             justifyContent: 'space-between',
             alignItems: 'center',
             paddingVertical: 18,
-            borderTopWidth: 1,
-            borderBottomWidth: 1,
-            borderColor: '#d2d3ce',
+            
           }}
         >
-          <Text style={{ fontSize: 16, color: colors.textOnDark }}>
+          <Text style={{ fontSize: 16, color: colors.textOnAccent }}>
             Ciclismo
           </Text>
 
@@ -105,29 +102,6 @@ export default function ActivitySelector({
             color="#bcff00"
           />
         </TouchableOpacity>
-
-        {/* Confirmar */}
-        {/* <TouchableOpacity
-          onPress={onClose}
-          style={{
-            marginTop: 30,
-            height: 52,
-            borderRadius: 16,
-            backgroundColor: '#2E7D32',
-            justifyContent: 'center',
-            alignItems: 'center',
-          }}
-        >
-          <Text
-            style={{
-              color: '#FFF',
-              fontWeight: '700',
-              fontSize: 16,
-            }}
-          >
-            Confirmar
-          </Text>
-        </TouchableOpacity> */}
       </View>
     </Modal>
   )

@@ -8,6 +8,7 @@ export interface Lobby {
   id: string;
   name: string;
   pictureUri?: string;
+  creatorId: string;
   allowPreviousImports: boolean;
   allowMemberInvitations: boolean;
   inGameChatEnabled: boolean;
