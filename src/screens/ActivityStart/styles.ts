@@ -67,7 +67,7 @@ export const styles = StyleSheet.create({
   position: 'absolute',
   left: 16,
   right: 16,
-  bottom: 24,
+  bottom: 55,
   flexDirection: 'row',
   gap: 12,
 },

@@ -7,7 +7,7 @@ export const styles = StyleSheet.create({
     position: 'absolute',
     left: 16,
     right: 16,
-    bottom: 100,
+    bottom: 130,
     backgroundColor: colors.backgroundDark,
     borderRadius: 20,
     paddingVertical: 18,

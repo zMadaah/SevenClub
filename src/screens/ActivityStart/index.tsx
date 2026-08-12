@@ -17,6 +17,7 @@ import { ActivityType } from '../../types/lobby';
 import { SavedRoute } from '../../types/route';
 
 import { useSavedRoutes } from '../../contexts/SavedRoutesContext';
+import { useUserPosts } from '../../contexts/UserPostsContext';
 
 import ActivityStatsModal from './components/ActivityStatsModal';
 import ActivitySummaryModal from './components/ActivitySummaryModal';
@@ -34,8 +35,10 @@ export default function ActivityStart() {
   const [summaryVisible, setSummaryVisible] = useState(false);
   const [activityName, setActivityName] = useState('');
   const [saving, setSaving] = useState(false);
+  const [saved, setSaved] = useState(false);
 
   const { savedRoutes } = useSavedRoutes();
+  const { addPost } = useUserPosts();
 
   const [routeModalVisible, setRouteModalVisible] = useState(false);
   const [activityTypeModalVisible, setActivityTypeModalVisible] = useState(false);
@@ -80,6 +83,7 @@ export default function ActivityStart() {
 
   function handleCloseSummary() {
     setSummaryVisible(false);
+    setSaved(false);
     tracker.resume(); // fechar sem salvar = "ainda não terminei"
   }
 
@@ -102,13 +106,29 @@ export default function ActivityStart() {
       // TODO: trocar por chamada real em services/api.ts assim que existir
       await new Promise((resolve) => setTimeout(resolve, 400));
 
-      setSummaryVisible(false);
-      setActivityName('');
-      tracker.reset();
-      navigation.goBack();
+      // Igual o Strava: toda atividade salva já aparece no seu feed
+      // automaticamente, sem precisar de uma ação separada de "postar"
+      addPost({
+        activityName: completed.name,
+        distanceKm: completed.distanceMeters / 1000,
+        durationLabel: formatDuration(completed.durationSeconds),
+        avgPaceLabel: completed.paceLabel,
+        territoryKm2: completed.loopClosed ? completed.captureM2 / 1_000_000 : undefined,
+        activityType,
+      });
+
+      setSaved(true);
     } finally {
       setSaving(false);
     }
+  }
+
+  function handleFinishSummary() {
+    setSummaryVisible(false);
+    setSaved(false);
+    setActivityName('');
+    tracker.reset();
+    navigation.goBack();
   }
 
   const buttonLabel = !tracker.isRunning ? 'INICIAR' : tracker.isPaused ? 'RETOMAR' : 'PAUSA';
@@ -183,8 +203,11 @@ export default function ActivityStart() {
         loopClosed={loopClosed}
         captureM2={captureM2}
         activityName={activityName}
+        activityType={activityType}
         onChangeActivityName={setActivityName}
         saving={saving}
+        saved={saved}
+        onFinish={handleFinishSummary}
       />
 
       <RouteSelectModal

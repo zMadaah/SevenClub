@@ -8,8 +8,14 @@ import {
 } from '../constants/currentUser';
 
 interface NewPostInput {
-  photoUris: string[];
-  caption: string;
+  photoUris?: string[];
+  caption?: string;
+  activityName?: string;
+  distanceKm?: number;
+  durationLabel?: string;
+  avgPaceLabel?: string;
+  territoryKm2?: number;
+  activityType?: ActivityType;
 }
 
 interface UserPostsContextValue {
@@ -22,7 +28,16 @@ const UserPostsContext = createContext<UserPostsContextValue | undefined>(undefi
 export function UserPostsProvider({ children }: { children: ReactNode }) {
   const [userPosts, setUserPosts] = useState<FeedPost[]>([]);
 
-  function addPost({ photoUris, caption }: NewPostInput) {
+  function addPost({
+    photoUris,
+    caption,
+    activityName,
+    distanceKm,
+    durationLabel,
+    avgPaceLabel,
+    territoryKm2,
+    activityType,
+  }: NewPostInput) {
     // TODO: antes de salvar de verdade, subir cada uri de `photoUris`
     // pro Storage (Firebase, no backend que já criamos) e usar as URLs
     // públicas devolvidas — hoje o post só existe na sessão local do device.
@@ -37,11 +52,16 @@ export function UserPostsProvider({ children }: { children: ReactNode }) {
         countryFlag: '🇧🇷',
       },
       createdAt: 'agora',
-      caption: caption.length > 0 ? caption : undefined,
-      photos: photoUris,
+      title: activityName,
+      caption: caption && caption.length > 0 ? caption : undefined,
+      photos: photoUris ?? [],
+      distanceKm,
+      durationLabel,
+      avgPaceLabel,
+      territoryKm2,
       likes: 0,
       comments: 0,
-      activityType: 'run' as ActivityType,
+      activityType: activityType ?? 'run',
       isGroup: false,
       isFollowing: true,
     };

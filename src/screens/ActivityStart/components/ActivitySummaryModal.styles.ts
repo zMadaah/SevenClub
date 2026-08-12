@@ -117,4 +117,47 @@ export const styles = StyleSheet.create({
   saveTextDisabled: {
     color: '#D2D3CE',
   },
+  successIconWrapper: {
+    alignSelf: 'center',
+    marginBottom: 12,
+  },
+  successTitle: {
+    fontSize: 20,
+    fontWeight: '800',
+    color: '#111',
+    textAlign: 'center',
+    marginBottom: 4,
+  },
+  successSubtitle: {
+    fontSize: 13,
+    color: '#666',
+    textAlign: 'center',
+    marginBottom: 20,
+  },
+  shareButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 8,
+    backgroundColor: '#BCFF00',
+    paddingVertical: 16,
+    borderRadius: 28,
+    marginTop: 20,
+  },
+  shareButtonText: {
+    fontSize: 14,
+    fontWeight: '700',
+    color: '#061414',
+    letterSpacing: 0.5,
+  },
+  finishButton: {
+    alignItems: 'center',
+    paddingVertical: 14,
+  },
+  finishButtonText: {
+    fontSize: 13,
+    fontWeight: '700',
+    color: '#666',
+    letterSpacing: 0.5,
+  },
 });
