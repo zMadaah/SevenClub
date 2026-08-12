@@ -6,12 +6,13 @@ import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 
 import { RootStackParamList } from '../../navigation/types';
 import { useAuth } from '../../contexts/AuthContext';
+import { api, ApiError } from '../../services/api';
 import { colors } from '../../theme/colors';
 import { styles } from './styles';
 
 export default function Login() {
   const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
-  const { login } = useAuth();
+  const { signIn } = useAuth();
 
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -29,9 +30,10 @@ export default function Login() {
     if (!canSubmit) return;
     setSubmitting(true);
     try {
-      // TODO: trocar por chamada real em services/api.ts assim que existir
-      await new Promise((resolve) => setTimeout(resolve, 500));
-      login();
+      await signIn(email.trim(), password);
+    } catch (err) {
+      const message = err instanceof ApiError ? err.message : 'Não foi possível entrar.';
+      Alert.alert('Ops', message);
     } finally {
       setSubmitting(false);
     }

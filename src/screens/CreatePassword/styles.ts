@@ -20,7 +20,7 @@ export const styles = StyleSheet.create({
     lineHeight: 36,
     marginBottom: 28,
   },
-  input: {
+ input: {
     borderWidth: 1,
     borderColor: colors.border,
     borderRadius: 16,
@@ -29,6 +29,24 @@ export const styles = StyleSheet.create({
     fontSize: 14,
     color: colors.textPrimary,
     marginBottom: 12,
+  },
+  inputWrapper: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    borderWidth: 1,
+    borderColor: colors.border,
+    borderRadius: 16,
+    marginBottom: 12,
+  },
+  inputWithIcon: {
+    flex: 1,
+    paddingHorizontal: 16,
+    paddingVertical: 14,
+    fontSize: 14,
+    color: colors.textPrimary,
+  },
+  eyeButton: {
+    paddingHorizontal: 14,
   },
   errorText: {
     fontSize: 12,

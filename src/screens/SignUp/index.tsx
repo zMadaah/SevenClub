@@ -1,10 +1,11 @@
 import React, { useState } from 'react';
-import { View, Text, TextInput, TouchableOpacity } from 'react-native';
+import { View, Text, TextInput, TouchableOpacity, Alert } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useNavigation } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 
 import { RootStackParamList } from '../../navigation/types';
+import { api, ApiError } from '../../services/api';
 import { colors } from '../../theme/colors';
 import { styles } from './styles';
 
@@ -23,10 +24,16 @@ export default function SignUp() {
     if (!canSubmit) return;
     setSubmitting(true);
     try {
-      // TODO: trocar por chamada real em services/api.ts — deve disparar
-      // o envio do código de ativação por SMS/e-mail no backend
-      await new Promise((resolve) => setTimeout(resolve, 500));
-      navigation.navigate('VerifyCode', { purpose: 'signup', contact: email.trim() });
+      const { signupId, devCode } = await api.signupStart(name.trim(), email.trim(), phone.trim());
+      // devCode só existe fora de produção (sem gateway de SMS configurado
+      // ainda) — mostra pra dar pra testar o fluxo sem receber SMS de verdade
+      if (devCode) {
+        Alert.alert('Código de teste', `Ambiente sem SMS configurado. Código: ${devCode}`);
+      }
+      navigation.navigate('VerifyCode', { purpose: 'signup', contact: email.trim(), verificationId: signupId });
+    } catch (err) {
+      const message = err instanceof ApiError ? err.message : 'Não foi possível criar o cadastro.';
+      Alert.alert('Ops', message);
     } finally {
       setSubmitting(false);
     }

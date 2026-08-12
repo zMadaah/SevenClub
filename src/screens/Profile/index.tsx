@@ -24,7 +24,7 @@ export default function Profile() {
   const [unitModalVisible, setUnitModalVisible] = useState(false);
   const [anonymousModalVisible, setAnonymousModalVisible] = useState(false);
   const [supportExpanded, setSupportExpanded] = useState(false);
-  const { logout } = useAuth();
+  const { signOut } = useAuth();
 
   const unitLabel = unitSystem === 'metric' ? 'Quilômetros e metros' : 'Milhas e pés';
 
@@ -293,7 +293,7 @@ export default function Profile() {
       </View>
 
       {/* Sair */}
-      <TouchableOpacity style={styles.logoutButton} onPress={logout}>
+      <TouchableOpacity style={styles.logoutButton} onPress={() => signOut()}>
         <Text style={styles.logoutText}>SAIR</Text>
       </TouchableOpacity>
 

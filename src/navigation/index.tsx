@@ -1,6 +1,9 @@
 import React from 'react';
+import { View, ActivityIndicator } from 'react-native';
 import { NavigationContainer } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
+
+import { colors } from '../theme/colors';
 
 import BottomTabs from './BottomTabs';
 
@@ -59,7 +62,18 @@ import { MyLobbiesProvider } from '../contexts/MyLobbiesContext';
 const Stack = createNativeStackNavigator<RootStackParamList>();
 
 function RootNavigator() {
-  const { isAuthenticated } = useAuth();
+  const { isAuthenticated, isRestoring } = useAuth();
+
+  // Enquanto tenta restaurar a sessão salva (SecureStore + refresh),
+  // não decide ainda entre pilha logada ou pilha de login — evita um
+  // flash da tela de Login antes de saber se já tinha sessão válida.
+  if (isRestoring) {
+    return (
+      <View style={{ flex: 1, backgroundColor: colors.background, alignItems: 'center', justifyContent: 'center' }}>
+        <ActivityIndicator color={colors.accent} />
+      </View>
+    );
+  }
 
   return (
     <Stack.Navigator screenOptions={{ headerShown: false }}>

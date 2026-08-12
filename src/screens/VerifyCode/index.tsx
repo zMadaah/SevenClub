@@ -1,11 +1,12 @@
 import React, { useState } from 'react';
-import { View, Text, TouchableOpacity } from 'react-native';
+import { View, Text, TouchableOpacity, Alert } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useNavigation, useRoute, RouteProp } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 
 import { RootStackParamList } from '../../navigation/types';
 import OtpCodeInput from '../../components/OtpCodeInput';
+import { api, ApiError } from '../../services/api';
 import { colors } from '../../theme/colors';
 import { styles } from './styles';
 
@@ -14,10 +15,11 @@ type VerifyCodeRouteProp = RouteProp<RootStackParamList, 'VerifyCode'>;
 export default function VerifyCode() {
   const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
   const route = useRoute<VerifyCodeRouteProp>();
-  const { purpose, contact } = route.params;
+  const { purpose, contact, verificationId } = route.params;
 
   const [code, setCode] = useState('');
   const [submitting, setSubmitting] = useState(false);
+  const [resending, setResending] = useState(false);
 
   const canSubmit = code.length === 6 && !submitting;
 
@@ -25,21 +27,40 @@ export default function VerifyCode() {
     if (!canSubmit) return;
     setSubmitting(true);
     try {
-      // TODO: trocar por chamada real em services/api.ts assim que existir
-      await new Promise((resolve) => setTimeout(resolve, 500));
-
       if (purpose === 'signup') {
-        navigation.navigate('CreatePassword', { contact });
+        await api.signupVerifyCode(verificationId, code);
+        navigation.navigate('CreatePassword', { verificationId });
       } else {
-        navigation.navigate('NewPassword', { contact });
+        await api.passwordResetVerifyCode(verificationId, code);
+        navigation.navigate('NewPassword', { verificationId });
       }
+    } catch (err) {
+      const message = err instanceof ApiError ? err.message : 'Não foi possível verificar o código.';
+      Alert.alert('Ops', message);
     } finally {
       setSubmitting(false);
     }
   }
 
-  function handleResend() {
-    // TODO: disparar reenvio real via services/api.ts
+  async function handleResend() {
+    if (resending) return;
+    setResending(true);
+    try {
+      const { devCode } =
+        purpose === 'signup'
+          ? await api.signupResend(verificationId)
+          : await api.passwordResetResend(verificationId);
+      if (devCode) {
+        Alert.alert('Código de teste', `Ambiente sem SMS configurado. Código: ${devCode}`);
+      } else {
+        Alert.alert('Código reenviado', `Um novo código foi enviado para ${contact}.`);
+      }
+    } catch (err) {
+      const message = err instanceof ApiError ? err.message : 'Não foi possível reenviar o código.';
+      Alert.alert('Ops', message);
+    } finally {
+      setResending(false);
+    }
   }
 
   return (
@@ -58,8 +79,8 @@ export default function VerifyCode() {
           <OtpCodeInput onChangeCode={setCode} />
         </View>
 
-        <TouchableOpacity onPress={handleResend}>
-          <Text style={styles.resendText}>Reenviar código</Text>
+        <TouchableOpacity onPress={handleResend} disabled={resending}>
+          <Text style={styles.resendText}>{resending ? 'Reenviando...' : 'Reenviar código'}</Text>
         </TouchableOpacity>
 
         <TouchableOpacity

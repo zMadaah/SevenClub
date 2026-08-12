@@ -1,10 +1,11 @@
 import React, { useState } from 'react';
-import { View, Text, TextInput, TouchableOpacity } from 'react-native';
+import { View, Text, TextInput, TouchableOpacity, Alert } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useNavigation } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 
 import { RootStackParamList } from '../../navigation/types';
+import { api, ApiError } from '../../services/api';
 import { colors } from '../../theme/colors';
 import { styles } from './styles';
 
@@ -23,10 +24,18 @@ export default function ForgotPassword() {
     if (!canSubmit) return;
     setSubmitting(true);
     try {
-      // TODO: trocar por chamada real em services/api.ts — deve disparar
-      // o envio do código de recuperação por e-mail ou SMS
-      await new Promise((resolve) => setTimeout(resolve, 500));
-      navigation.navigate('VerifyCode', { purpose: 'reset', contact: contact.trim() });
+      // A resposta é sempre a mesma (sucesso), exista ou não conta com
+      // esse contato — é assim de propósito no backend, pra não revelar
+      // se um e-mail/celular tem cadastro. Por isso não tratamos "não
+      // encontrado" aqui: sempre seguimos pra tela de código.
+      const { resetId, devCode } = await api.passwordResetStart(method, contact.trim());
+      if (devCode) {
+        Alert.alert('Código de teste', `Ambiente sem SMS/e-mail configurado. Código: ${devCode}`);
+      }
+      navigation.navigate('VerifyCode', { purpose: 'reset', contact: contact.trim(), verificationId: resetId });
+    } catch (err) {
+      const message = err instanceof ApiError ? err.message : 'Não foi possível enviar o código.';
+      Alert.alert('Ops', message);
     } finally {
       setSubmitting(false);
     }

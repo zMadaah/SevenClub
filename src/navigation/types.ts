@@ -3,10 +3,10 @@ import type { NavigatorScreenParams } from '@react-navigation/native';
 export type RootStackParamList = {
     Login: undefined;
     SignUp: undefined;
-    VerifyCode: { purpose: 'signup' | 'reset'; contact: string };
-    CreatePassword: { contact: string };
+    VerifyCode: { purpose: 'signup' | 'reset'; contact: string; verificationId: string };
+    CreatePassword: { verificationId: string };
     ForgotPassword: undefined;
-    NewPassword: { contact: string };
+    NewPassword: { verificationId: string };
     Main: NavigatorScreenParams<BottomTabsParamList> | undefined;
     Profile: undefined;
     Private: undefined;
