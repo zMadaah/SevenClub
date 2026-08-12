@@ -1,12 +1,18 @@
 import { Lobby } from '../../types/lobby';
+import { CURRENT_USER_ID } from '../../constants/currentUser';
 
 // TODO: mock só pra visualização/teste — remover quando o fluxo real
 // de criar/entrar em lobby estiver conectado a um backend de verdade.
+//
+// "TESTE 2" é seu (creatorId = você) — abre a tela de admin ao tocar na
+// engrenagem. "Grupo da Manhã" é do Rafael — abre a tela de participante
+// (só participantes + sair), pra dar pra testar as duas visões.
 export const MOCK_MY_LOBBIES: Lobby[] = [
   {
     id: 'mock-lobby-1',
     name: 'TESTE 2',
     pictureUri: undefined,
+    creatorId: CURRENT_USER_ID,
     allowPreviousImports: true,
     allowMemberInvitations: false,
     inGameChatEnabled: true,
@@ -23,6 +29,7 @@ export const MOCK_MY_LOBBIES: Lobby[] = [
     id: 'mock-lobby-2',
     name: 'Grupo da Manhã',
     pictureUri: undefined,
+    creatorId: 'r4',
     allowPreviousImports: true,
     allowMemberInvitations: true,
     inGameChatEnabled: true,

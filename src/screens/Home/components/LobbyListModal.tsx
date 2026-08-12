@@ -1,11 +1,11 @@
 import React from 'react';
-import { Modal, View, Text, TouchableOpacity, FlatList, Alert } from 'react-native';
+import { Modal, View, Text, TouchableOpacity, FlatList } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useNavigation } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 
 import { RootStackParamList } from '../../../navigation/types';
-import { MOCK_MY_LOBBIES } from '../../../services/mock/lobby';
+import { useMyLobbies } from '../../../contexts/MyLobbiesContext';
 import { Lobby } from '../../../types/lobby';
 import { styles } from './LobbyListModal.styles';
 
@@ -23,6 +23,7 @@ export default function LobbyListModal({
   onSelectLobby,
 }: LobbyListModalProps) {
   const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
+  const { lobbies } = useMyLobbies();
 
   function handleSelect(lobby: Lobby) {
     onSelectLobby(lobby);
@@ -30,9 +31,8 @@ export default function LobbyListModal({
   }
 
   function handleOpenSettings(lobby: Lobby) {
-    // TODO: navegar pra tela de configurações do lobby quando existir
-    Alert.alert('Em breve', `Configurações de "${lobby.name}" ainda não estão disponíveis.`);
-    // navigation.navigate('CreateLobby');
+    onClose();
+    navigation.navigate('CreateLobby', { lobbyId: lobby.id });
   }
 
   function handleNewPrivateGame() {
@@ -54,7 +54,7 @@ export default function LobbyListModal({
           </View>
 
           <FlatList
-            data={MOCK_MY_LOBBIES}
+            data={lobbies}
             keyExtractor={(item) => item.id}
             style={styles.list}
             ItemSeparatorComponent={() => <View style={{ height: 10 }} />}

@@ -2,14 +2,21 @@ import React, { useRef, useState } from 'react';
 import { View, Text, TextInput, TouchableOpacity, NativeSyntheticEvent, TextInputKeyPressEventData } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useNavigation } from '@react-navigation/native';
+import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 
+import { RootStackParamList } from '../../navigation/types';
+import { Lobby } from '../../types/lobby';
+import { useActiveLobby } from '../../contexts/ActiveLobbyContext';
+import { useGameMode } from '../../contexts/GameModeContext';
 import { colors } from '../../theme/colors';
 import { styles } from './styles';
 
 const CODE_LENGTH = 6;
 
 export default function JoinLobby() {
-  const navigation = useNavigation();
+  const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
+  const { setActiveLobby } = useActiveLobby();
+  const { setGameMode } = useGameMode();
   const inputRefs = useRef<Array<TextInput | null>>([]);
 
   const [digits, setDigits] = useState<string[]>(Array(CODE_LENGTH).fill(''));
@@ -42,8 +49,26 @@ export default function JoinLobby() {
     setSubmitting(true);
     try {
       // TODO: trocar por chamada real em services/api.ts assim que existir
+      // — hoje não existe backend pra validar o código, então montamos
+      // um lobby mock só com o que temos (o próprio código digitado).
       await new Promise((resolve) => setTimeout(resolve, 500));
-      navigation.goBack();
+
+      const joinedLobby: Lobby = {
+        id: `joined-${code}`,
+        name: `Lobby ${code}`,
+        creatorId: 'unknown-admin', // entrar por código nunca é você quem criou
+        allowPreviousImports: true,
+        allowMemberInvitations: false,
+        inGameChatEnabled: true,
+        maxLobbySize: null,
+        inviteCode: code,
+        members: [],
+        createdAt: Date.now(),
+      };
+
+      setActiveLobby(joinedLobby);
+      setGameMode('private');
+      navigation.navigate('Main', { screen: 'Home' });
     } finally {
       setSubmitting(false);
     }

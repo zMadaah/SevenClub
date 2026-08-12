@@ -52,8 +52,9 @@ import { ActiveCrewProvider } from '../contexts/ActiveCrewContext';
 import { FeaturedBadgeProvider } from '../contexts/FeaturedBadgeContext';
 import { CommentsProvider } from '../contexts/CommentsContext';
 import { UserPostsProvider } from '../contexts/UserPostsContext';
-
+import { GameModeProvider } from '../contexts/GameModeContext';
 import { GroupChatProvider } from '../contexts/GroupChatContext';
+import { MyLobbiesProvider } from '../contexts/MyLobbiesContext';
 
 const Stack = createNativeStackNavigator<RootStackParamList>();
 
@@ -114,21 +115,23 @@ export default function Navigation() {
     <AuthProvider>
       <ActiveLobbyProvider>
         <ActiveCrewProvider>
-          
+          <GameModeProvider>
             <GroupChatProvider>
-              <FeaturedBadgeProvider>
-                <CommentsProvider>
-                  <UserPostsProvider>
-                    <SavedRoutesProvider>
-                      <NavigationContainer>
-                        <RootNavigator />
-                      </NavigationContainer>
-                    </SavedRoutesProvider>
-                  </UserPostsProvider>
-                </CommentsProvider>
-              </FeaturedBadgeProvider>
+              <MyLobbiesProvider>
+                <FeaturedBadgeProvider>
+                  <CommentsProvider>
+                    <UserPostsProvider>
+                      <SavedRoutesProvider>
+                        <NavigationContainer>
+                          <RootNavigator />
+                        </NavigationContainer>
+                      </SavedRoutesProvider>
+                    </UserPostsProvider>
+                  </CommentsProvider>
+                </FeaturedBadgeProvider>
+              </MyLobbiesProvider>
             </GroupChatProvider>
-         
+          </GameModeProvider>
         </ActiveCrewProvider>
       </ActiveLobbyProvider>
     </AuthProvider>

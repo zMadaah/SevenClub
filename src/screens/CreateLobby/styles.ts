@@ -120,4 +120,42 @@ export const styles = StyleSheet.create({
   createTextDisabled: {
     color: '#aaa',
   },
+  emptyMembersText: {
+    fontSize: 13,
+    color: '#999',
+    marginBottom: 8,
+  },
+  memberRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+    paddingVertical: 8,
+  },
+  memberAvatar: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+  },
+  memberName: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: '#111',
+  },
+  deleteButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 6,
+    borderWidth: 1,
+    borderColor: '#D85A30',
+    paddingVertical: 14,
+    borderRadius: 999,
+    marginBottom: 12,
+  },
+  deleteButtonText: {
+    fontSize: 13,
+    fontWeight: '700',
+    color: '#D85A30',
+    letterSpacing: 0.5,
+  },
 });

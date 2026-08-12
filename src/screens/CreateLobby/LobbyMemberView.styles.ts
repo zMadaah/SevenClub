@@ -1,0 +1,95 @@
+import { StyleSheet } from 'react-native';
+
+export const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    backgroundColor: '#fff',
+  },
+  header: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingHorizontal: 16,
+    paddingTop: 56,
+    paddingBottom: 8,
+  },
+  backButton: {
+    width: 20,
+  },
+  hero: {
+    alignItems: 'center',
+    paddingBottom: 24,
+    borderBottomWidth: 1,
+    borderBottomColor: '#F0F0F0',
+    marginBottom: 20,
+  },
+  pictureBox: {
+    width: 80,
+    height: 80,
+    borderRadius: 40,
+    backgroundColor: '#F0F0F0',
+    alignItems: 'center',
+    justifyContent: 'center',
+    overflow: 'hidden',
+    marginBottom: 12,
+  },
+  pictureImage: {
+    width: '100%',
+    height: '100%',
+  },
+  lobbyName: {
+    fontSize: 22,
+    fontWeight: '800',
+    color: '#111',
+  },
+  content: {
+    paddingHorizontal: 20,
+  },
+  sectionTitle: {
+    fontSize: 16,
+    fontWeight: '800',
+    color: '#111',
+    marginBottom: 16,
+  },
+  emptyMembersText: {
+    fontSize: 13,
+    color: '#999',
+  },
+  memberRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+    paddingVertical: 8,
+  },
+  memberAvatar: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+  },
+  memberName: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: '#111',
+  },
+  footer: {
+    paddingHorizontal: 20,
+    paddingBottom: 28,
+    paddingTop: 12,
+  },
+  leaveButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 6,
+    borderWidth: 1,
+    borderColor: '#D85A30',
+    paddingVertical: 16,
+    borderRadius: 999,
+  },
+  leaveButtonText: {
+    fontSize: 13,
+    fontWeight: '700',
+    color: '#D85A30',
+    letterSpacing: 0.5,
+  },
+});
