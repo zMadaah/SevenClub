@@ -115,7 +115,7 @@ export default function ActivityStart() {
 
   return (
     <View style={styles.container}>
-      <Map />
+      <Map showFloatingControls={false} />
 
       <View style={styles.header}>
         <TouchableOpacity style={styles.backButton} onPress={() => navigation.goBack()}>
