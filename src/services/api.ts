@@ -1,4 +1,5 @@
 import { LatLng } from 'react-native-maps';
+import { SavedRoute } from '../types/route';
 
 // EXPO_PUBLIC_* fica embutido no bundle em tempo de build — é assim que o
 // Expo expõe env vars pro código do cliente. Configure no .env (raiz do
@@ -10,8 +11,17 @@ export class ApiError extends Error {
   constructor(status: number, message: string) {
     super(message);
     this.status = status;
+    this.name = 'ApiError';
+    // Necessário porque o Babel/Metro transpila classes que estendem Error
+    // de um jeito que quebra a cadeia de protótipos — sem isso,
+    // `err instanceof ApiError` pode dar false mesmo pra um ApiError de
+    // verdade, e todo catch cai no fallback genérico em vez de mostrar o
+    // erro real que a API mandou.
+    Object.setPrototypeOf(this, ApiError.prototype);
   }
 }
+
+const REQUEST_TIMEOUT_MS = 15000;
 
 // Requisição "crua" — usada tanto pelas chamadas públicas (login, signup)
 // quanto, com um token, pelas autenticadas. O AuthContext usa isso
@@ -27,11 +37,22 @@ export async function request<T = any>(
   };
   if (token) headers.Authorization = `Bearer ${token}`;
 
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), REQUEST_TIMEOUT_MS);
+
   let response: Response;
   try {
-    response = await fetch(`${BASE_URL}${path}`, { ...options, headers });
-  } catch {
+    response = await fetch(`${BASE_URL}${path}`, { ...options, headers, signal: controller.signal });
+  } catch (err: any) {
+    if (err?.name === 'AbortError') {
+      throw new ApiError(
+        0,
+        `Servidor não respondeu em ${REQUEST_TIMEOUT_MS / 1000}s. Verifique se a API está rodando e se o EXPO_PUBLIC_API_URL no .env aponta pro IP certo.`
+      );
+    }
     throw new ApiError(0, 'Não foi possível conectar ao servidor. Verifique sua internet.');
+  } finally {
+    clearTimeout(timeoutId);
   }
 
   if (response.status === 204) {
@@ -126,14 +147,35 @@ export const api = {
       method: 'POST',
       body: JSON.stringify({ refreshToken }),
     }),
+};
 
-  // --- Rotas autenticadas abaixo exigem um `authFetch` (ver AuthContext) --
-  // Feitas como funções que recebem o token pra poderem ser chamadas tanto
-  // pelo authFetch (que já cuida do refresh automático) quanto isoladamente.
-  me: (token: string) => request<any>('/auth/me', { method: 'GET' }, token),
+// --- Rotas autenticadas -----------------------------------------------------
+// Recebem o `authFetch` do AuthContext (useAuth()) em vez de um token cru:
+// authFetch já injeta o Authorization header e, se o access token tiver
+// vencido (401), renova com o refresh token e repete a chamada sozinho.
+export type AuthFetch = <T = any>(path: string, options?: RequestInit) => Promise<T>;
+
+interface RawSavedRoute {
+  id: string;
+  name: string;
+  points: Point[];
+  distanceMeters: number;
+  captureM2: number;
+  createdAt: string;
+}
+
+// A API devolve created_at como string ISO (timestamptz do Postgres); o
+// tipo SavedRoute do app espera number (Date.now()-like). Normaliza aqui,
+// num único lugar, em vez de espalhar essa conversão pelas telas.
+function normalizeSavedRoute(raw: RawSavedRoute): SavedRoute {
+  return { ...raw, createdAt: new Date(raw.createdAt).getTime() };
+}
+
+export const authApi = {
+  me: (authFetch: AuthFetch) => authFetch<any>('/auth/me'),
 
   createActivity: (
-    token: string,
+    authFetch: AuthFetch,
     payload: {
       name: string;
       activityType: 'run' | 'ride';
@@ -141,22 +183,25 @@ export const api = {
       startedAt: string;
       endedAt: string;
     }
-  ) => request<any>('/activities', { method: 'POST', body: JSON.stringify(payload) }, token),
+  ) => authFetch<any>('/activities', { method: 'POST', body: JSON.stringify(payload) }),
 
-  listActivities: (token: string) => request<any[]>('/activities', { method: 'GET' }, token),
+  listActivities: (authFetch: AuthFetch) => authFetch<any[]>('/activities'),
 
-  getActivity: (token: string, id: string) => request<any>(`/activities/${id}`, { method: 'GET' }, token),
+  getActivity: (authFetch: AuthFetch, id: string) => authFetch<any>(`/activities/${id}`),
 
-  listTerritory: (token: string, activityType: 'run' | 'ride') =>
-    request<any[]>(`/territory?activityType=${activityType}`, { method: 'GET' }, token),
+  listTerritory: (authFetch: AuthFetch, activityType: 'run' | 'ride') =>
+    authFetch<any[]>(`/territory?activityType=${activityType}`),
 
-  myStats: (token: string, activityType: 'run' | 'ride') =>
-    request<any>(`/stats/me?activityType=${activityType}`, { method: 'GET' }, token),
+  myStats: (authFetch: AuthFetch, activityType: 'run' | 'ride') =>
+    authFetch<any>(`/stats/me?activityType=${activityType}`),
 
-  createRoute: (token: string, payload: { name: string; points: Point[] | LatLng[] }) =>
-    request<any>('/routes', { method: 'POST', body: JSON.stringify(payload) }, token),
+  createRoute: (authFetch: AuthFetch, payload: { name: string; points: Point[] | LatLng[] }) =>
+    authFetch<RawSavedRoute>('/routes', { method: 'POST', body: JSON.stringify(payload) }).then(
+      normalizeSavedRoute
+    ),
 
-  listRoutes: (token: string) => request<any[]>('/routes', { method: 'GET' }, token),
+  listRoutes: (authFetch: AuthFetch) =>
+    authFetch<RawSavedRoute[]>('/routes').then((routes) => routes.map(normalizeSavedRoute)),
 
-  deleteRoute: (token: string, id: string) => request<void>(`/routes/${id}`, { method: 'DELETE' }, token),
+  deleteRoute: (authFetch: AuthFetch, id: string) => authFetch<void>(`/routes/${id}`, { method: 'DELETE' }),
 };

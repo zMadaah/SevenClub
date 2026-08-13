@@ -17,6 +17,10 @@ export interface MapHandle {
 interface MapProps {
   drawable?: boolean;
   points?: LatLng[];
+  // Rota salva selecionada como guia — desenhada tracejada, por baixo do
+  // trajeto ao vivo (`points`), pra servir de referência sem se confundir
+  // com o que já foi percorrido de verdade.
+  referenceRoute?: LatLng[];
   onMapPress?: (coordinate: LatLng) => void;
   showFloatingControls?: boolean;
   territory?: string;
@@ -30,6 +34,7 @@ function MapComponent(
   {
     drawable = false,
     points = [],
+    referenceRoute,
     onMapPress,
     showFloatingControls = true,
     territory = '0,00 km²',
@@ -148,6 +153,15 @@ function MapComponent(
           latitude={location.coords.latitude}
           longitude={location.coords.longitude}
         />
+
+        {referenceRoute && referenceRoute.length > 1 && (
+          <Polyline
+            coordinates={referenceRoute}
+            strokeColor="rgba(188, 255, 0, 0.45)"
+            strokeWidth={4}
+            lineDashPattern={[8, 6]}
+          />
+        )}
 
         {points.length > 0 && loopClosed && (
           <Polygon

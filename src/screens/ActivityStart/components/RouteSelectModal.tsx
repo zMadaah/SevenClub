@@ -1,5 +1,5 @@
 import React, { useMemo, useState } from 'react';
-import { Modal, View, Text, TouchableOpacity, FlatList } from 'react-native';
+import { Modal, View, Text, TouchableOpacity, FlatList, ActivityIndicator } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 
 import { SavedRoute } from '../../../types/route';
@@ -11,6 +11,8 @@ interface RouteSelectModalProps {
   visible: boolean;
   onClose: () => void;
   routes: SavedRoute[];
+  loading?: boolean;
+  selectedRouteId?: string | null;
   onSelectRoute: (route: SavedRoute) => void;
   onPlanRoute: () => void;
 }
@@ -19,6 +21,8 @@ export default function RouteSelectModal({
   visible,
   onClose,
   routes,
+  loading = false,
+  selectedRouteId = null,
   onSelectRoute,
   onPlanRoute,
 }: RouteSelectModalProps) {
@@ -63,7 +67,11 @@ export default function RouteSelectModal({
             </TouchableOpacity>
           </View>
 
-          {sortedRoutes.length === 0 ? (
+          {loading && routes.length === 0 ? (
+            <View style={styles.emptyState}>
+              <ActivityIndicator color="#061414" />
+            </View>
+          ) : sortedRoutes.length === 0 ? (
             <View style={styles.emptyState}>
               <Text style={styles.emptyTitle}>Nenhuma rota salva</Text>
               <Text style={styles.emptySubtitle}>
@@ -80,26 +88,33 @@ export default function RouteSelectModal({
               keyExtractor={(item) => item.id}
               style={styles.list}
               ItemSeparatorComponent={() => <View style={styles.separator} />}
-              renderItem={({ item }) => (
-                <TouchableOpacity
-                  style={styles.routeRow}
-                  onPress={() => onSelectRoute(item)}
-                  activeOpacity={0.7}
-                >
-                  <View style={styles.routeIcon}>
-                    <Ionicons name="trail-sign-outline" size={18} color="#061414" />
-                  </View>
+              renderItem={({ item }) => {
+                const isSelected = item.id === selectedRouteId;
+                return (
+                  <TouchableOpacity
+                    style={styles.routeRow}
+                    onPress={() => onSelectRoute(item)}
+                    activeOpacity={0.7}
+                  >
+                    <View style={styles.routeIcon}>
+                      <Ionicons
+                        name={isSelected ? 'checkmark-circle' : 'trail-sign-outline'}
+                        size={18}
+                        color={isSelected ? '#7FBF00' : '#061414'}
+                      />
+                    </View>
 
-                  <View style={styles.routeInfo}>
-                    <Text style={styles.routeName}>{item.name}</Text>
-                    <Text style={styles.routeMeta}>
-                      {(item.distanceMeters / 1000).toFixed(2)} km
-                    </Text>
-                  </View>
+                    <View style={styles.routeInfo}>
+                      <Text style={styles.routeName}>{item.name}</Text>
+                      <Text style={styles.routeMeta}>
+                        {(item.distanceMeters / 1000).toFixed(2)} km
+                      </Text>
+                    </View>
 
-                  <Ionicons name="chevron-forward" size={18} color="#999" />
-                </TouchableOpacity>
-              )}
+                    <Ionicons name="chevron-forward" size={18} color="#999" />
+                  </TouchableOpacity>
+                );
+              }}
             />
           )}
         </View>

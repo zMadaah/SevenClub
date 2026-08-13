@@ -30,7 +30,7 @@ export default function HomeHeader({
 
   return (
     <>
-      <SafeAreaView edges={['top']} style={styles.safeArea}>
+      <SafeAreaView  style={styles.safeArea}>
         <View style={styles.container}>
           <View style={styles.row}>
             {/* Avatar */}

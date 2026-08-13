@@ -1,5 +1,5 @@
 import React from 'react';
-import { Modal, View, Text, TouchableOpacity, FlatList } from 'react-native';
+import { Modal, View, Text, TouchableOpacity, FlatList, ActivityIndicator } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 
 import { SavedRoute } from '../../../types/route';
@@ -9,6 +9,7 @@ interface MyRoutesModalProps {
   visible: boolean;
   onClose: () => void;
   routes: SavedRoute[];
+  loading?: boolean;
   onSelectRoute: (route: SavedRoute) => void;
   onDeleteRoute: (id: string) => void;
 }
@@ -17,6 +18,7 @@ export default function MyRoutesModal({
   visible,
   onClose,
   routes,
+  loading = false,
   onSelectRoute,
   onDeleteRoute,
 }: MyRoutesModalProps) {
@@ -31,7 +33,11 @@ export default function MyRoutesModal({
             </TouchableOpacity>
           </View>
 
-          {routes.length === 0 ? (
+          {loading && routes.length === 0 ? (
+            <View style={styles.emptyState}>
+              <ActivityIndicator color="#061414" />
+            </View>
+          ) : routes.length === 0 ? (
             <View style={styles.emptyState}>
               <Ionicons name="map-outline" size={28} color="#999" />
               <Text style={styles.emptyText}>Você ainda não salvou nenhuma rota</Text>

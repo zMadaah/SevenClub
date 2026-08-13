@@ -1,5 +1,5 @@
 import React, { useMemo, useState } from 'react';
-import { View, Text, TouchableOpacity } from 'react-native';
+import { View, Text, TouchableOpacity, Alert } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { Ionicons } from '@expo/vector-icons';
@@ -17,6 +17,7 @@ import { ActivityType } from '../../types/lobby';
 import { SavedRoute } from '../../types/route';
 
 import { useSavedRoutes } from '../../contexts/SavedRoutesContext';
+import { ApiError } from '../../services/api';
 
 import ActivityStatsModal from './components/ActivityStatsModal';
 import ActivitySummaryModal from './components/ActivitySummaryModal';
@@ -35,7 +36,7 @@ export default function ActivityStart() {
   const [activityName, setActivityName] = useState('');
   const [saving, setSaving] = useState(false);
 
-  const { savedRoutes } = useSavedRoutes();
+  const { savedRoutes, loading: loadingRoutes, refreshRoutes } = useSavedRoutes();
 
   const [routeModalVisible, setRouteModalVisible] = useState(false);
   const [activityTypeModalVisible, setActivityTypeModalVisible] = useState(false);
@@ -53,9 +54,21 @@ export default function ActivityStart() {
     [tracker.points, loopClosed]
   );
 
+  function handleOpenRouteModal() {
+    setRouteModalVisible(true);
+    refreshRoutes().catch((err) => {
+      const message = err instanceof ApiError ? err.message : 'Não foi possível carregar suas rotas.';
+      Alert.alert('Ops', message);
+    });
+  }
+
   function handleSelectRoute(route: SavedRoute) {
     setSelectedRoute(route);
     setRouteModalVisible(false);
+  }
+
+  function handleClearSelectedRoute() {
+    setSelectedRoute(null);
   }
 
   function handlePlanRoute() {
@@ -115,7 +128,7 @@ export default function ActivityStart() {
 
   return (
     <View style={styles.container}>
-      <Map showFloatingControls={false} />
+      <Map showFloatingControls={false} points={tracker.points} referenceRoute={selectedRoute?.points} />
 
       <View style={styles.header}>
         <TouchableOpacity style={styles.backButton} onPress={() => navigation.goBack()}>
@@ -124,7 +137,7 @@ export default function ActivityStart() {
         </TouchableOpacity>
 
         <View style={styles.pillsRow}>
-          <TouchableOpacity style={styles.pill} onPress={() => setRouteModalVisible(true)}>
+          <TouchableOpacity style={styles.pill} onPress={handleOpenRouteModal}>
             <Ionicons name="git-network-outline" size={16} colors={colors.richBlack} />
             <Text style={styles.pillText}>Rotas</Text>
             <Ionicons name="chevron-down" size={14} colors={colors.overlay} />
@@ -143,6 +156,17 @@ export default function ActivityStart() {
           </TouchableOpacity>
         </View>
       </View>
+
+      {selectedRoute && !tracker.isRunning && (
+        <View style={styles.selectedRouteBanner}>
+          <Text style={styles.selectedRouteText} numberOfLines={1}>
+            Seguindo: {selectedRoute.name}
+          </Text>
+          <TouchableOpacity onPress={handleClearSelectedRoute} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
+            <Ionicons name="close-circle" size={18} color={colors.overlay} />
+          </TouchableOpacity>
+        </View>
+      )}
 
       <ActivityStatsModal
         visible={tracker.isRunning && !summaryVisible}
@@ -191,6 +215,8 @@ export default function ActivityStart() {
         visible={routeModalVisible}
         onClose={() => setRouteModalVisible(false)}
         routes={savedRoutes}
+        loading={loadingRoutes}
+        selectedRouteId={selectedRoute?.id ?? null}
         onSelectRoute={handleSelectRoute}
         onPlanRoute={handlePlanRoute}
       />

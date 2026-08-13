@@ -99,4 +99,23 @@ finalizeButtonText: {
   color: colors.textOnAccent,
   letterSpacing: 1,
 },
+selectedRouteBanner: {
+  position: 'absolute',
+  top: 118,
+  left: 16,
+  right: 16,
+  flexDirection: 'row',
+  alignItems: 'center',
+  justifyContent: 'space-between',
+  backgroundColor: colors.backgroundAlt,
+  borderRadius: 20,
+  paddingVertical: 8,
+  paddingHorizontal: 14,
+},
+selectedRouteText: {
+  fontSize: 13,
+  fontWeight: '600',
+  color: colors.textPrimary,
+  flexShrink: 1,
+},
 });

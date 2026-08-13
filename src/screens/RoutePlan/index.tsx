@@ -1,5 +1,5 @@
 import React, { useMemo, useRef, useState } from 'react';
-import { View, Text, TouchableOpacity } from 'react-native';
+import { View, Text, TouchableOpacity, Alert } from 'react-native';
 import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
 import { useNavigation } from '@react-navigation/native';
 import { LatLng } from 'react-native-maps';
@@ -13,6 +13,7 @@ import HelpModal from './components/HelpModal';
 import { SavedRoute } from '../../types/route';
 
 import { useSavedRoutes } from '../../contexts/SavedRoutesContext';
+import { ApiError } from '../../services/api';
 
 import { totalDistance, polygonArea, isLoopClosed } from '../../utils/geo';
 import { styles } from './styles';
@@ -33,7 +34,7 @@ export default function RoutePlan() {
   const [previewVisible, setPreviewVisible] = useState(false);
   const [routeName, setRouteName] = useState('');
 
-  const { savedRoutes, addRoute, removeRoute } = useSavedRoutes();
+  const { savedRoutes, loading: loadingRoutes, refreshRoutes, addRoute, removeRoute } = useSavedRoutes();
   const [myRoutesVisible, setMyRoutesVisible] = useState(false)
   const [helpVisible, setHelpVisible] = useState(false);
 
@@ -85,6 +86,10 @@ export default function RoutePlan() {
 
   function handleMyRoutes() {
     setMyRoutesVisible(true);
+    refreshRoutes().catch((err) => {
+      const message = err instanceof ApiError ? err.message : 'Não foi possível carregar suas rotas.';
+      Alert.alert('Ops', message);
+    });
   }
 
   function handleSelectRoute(route: SavedRoute) {
@@ -93,30 +98,27 @@ export default function RoutePlan() {
     setMyRoutesVisible(false);
   }
 
-  function handleDeleteRoute(id: string) {
-    removeRoute(id);
+  async function handleDeleteRoute(id: string) {
+    try {
+      await removeRoute(id);
+    } catch (err) {
+      const message = err instanceof ApiError ? err.message : 'Não foi possível remover a rota.';
+      Alert.alert('Ops', message);
+    }
   }
 
   async function handleConfirmSave() {
     if (!hasRoute || outOfFreeUses || saving || routeName.trim().length === 0) return;
     setSaving(true);
     try {
-      // TODO: trocar por chamada real em services/api.ts
-      await new Promise((resolve) => setTimeout(resolve, 400));
-
-      const newRoute: SavedRoute = {
-        id: Date.now().toString(),
-        name: routeName.trim(),
-        points,
-        distanceMeters: distance,
-        captureM2: capture,
-        createdAt: Date.now(),
-      };
-      addRoute(newRoute);
+      await addRoute(routeName.trim(), points);
 
       setFreeUsesLeft((prev) => prev - 1);
       setPreviewVisible(false);
       setRouteName('');
+    } catch (err) {
+      const message = err instanceof ApiError ? err.message : 'Não foi possível salvar a rota.';
+      Alert.alert('Ops', message);
     } finally {
       setSaving(false);
     }
@@ -232,6 +234,7 @@ export default function RoutePlan() {
         visible={myRoutesVisible}
         onClose={() => setMyRoutesVisible(false)}
         routes={savedRoutes}
+        loading={loadingRoutes}
         onSelectRoute={handleSelectRoute}
         onDeleteRoute={handleDeleteRoute}
       />
