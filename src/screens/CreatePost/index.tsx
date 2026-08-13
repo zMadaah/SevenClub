@@ -14,7 +14,8 @@ import { Ionicons } from '@expo/vector-icons';
 import { useNavigation } from '@react-navigation/native';
 import * as ImagePicker from 'expo-image-picker';
 
-import { useUserPosts } from '../../contexts/UserPostsContext';
+import { useAuth } from '../../contexts/AuthContext';
+import { authApi, ApiError } from '../../services/api';
 import { colors } from '../../theme/colors';
 import { styles } from './styles';
 
@@ -22,7 +23,7 @@ const MAX_PHOTOS = 6;
 
 export default function CreatePost() {
   const navigation = useNavigation();
-  const { addPost } = useUserPosts();
+  const { authFetch } = useAuth();
 
   const [photoUris, setPhotoUris] = useState<string[]>([]);
   const [caption, setCaption] = useState('');
@@ -101,12 +102,19 @@ export default function CreatePost() {
     if (photoUris.length === 0) return;
     setPublishing(true);
     try {
-      // TODO: fazer upload de cada uri em `photoUris` pro Storage
-      // (Firebase, no backend que já criamos) antes de gravar o post
-      // de verdade — por enquanto isso só entra na sessão local do device.
-      await new Promise((resolve) => setTimeout(resolve, 400));
-      addPost({ photoUris, caption: caption.trim() });
+      // Upload sequencial simples — poucas fotos por post (máx. 6), não
+      // vale a complexidade de subir em paralelo.
+      const photoUrls: string[] = [];
+      for (const uri of photoUris) {
+        const url = await authApi.uploadPhoto(authFetch, uri);
+        photoUrls.push(url);
+      }
+
+      await authApi.createPost(authFetch, { caption: caption.trim() || undefined, photoUrls });
       navigation.goBack();
+    } catch (err) {
+      const message = err instanceof ApiError ? err.message : 'Não foi possível publicar o post.';
+      Alert.alert('Ops', message);
     } finally {
       setPublishing(false);
     }

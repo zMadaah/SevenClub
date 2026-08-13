@@ -3,6 +3,9 @@ import { SavedRoute } from '../types/route';
 import { CompletedActivity, ActivitySummary } from '../types/activity';
 import { ActivityStats } from '../types/stats';
 import { ActivityHistory } from '../types/history';
+import { FeedPost } from '../types/post';
+import { Comment } from '../types/comment';
+import { formatRelativeTime } from '../utils/time';
 
 // EXPO_PUBLIC_* fica embutido no bundle em tempo de build — é assim que o
 // Expo expõe env vars pro código do cliente. Configure no .env (raiz do
@@ -34,8 +37,9 @@ export async function request<T = any>(
   options: RequestInit = {},
   token?: string
 ): Promise<T> {
+  const isFormData = typeof FormData !== 'undefined' && options.body instanceof FormData;
   const headers: Record<string, string> = {
-    'Content-Type': 'application/json',
+    ...(isFormData ? {} : { 'Content-Type': 'application/json' }),
     ...(options.headers as Record<string, string> | undefined),
   };
   if (token) headers.Authorization = `Bearer ${token}`;
@@ -182,6 +186,63 @@ function normalizeCompletedActivity(raw: RawCompletedActivity): CompletedActivit
   return { ...raw, createdAt: new Date(raw.createdAt).getTime() };
 }
 
+interface RawFeedPost {
+  id: string;
+  runner: {
+    id: string;
+    name: string;
+    avatarUrl: string;
+    level: number;
+    location: string;
+    countryFlag: string;
+  };
+  createdAt: string;
+  title?: string;
+  caption?: string;
+  photos: string[];
+  distanceKm?: number;
+  durationLabel?: string;
+  avgPaceLabel?: string;
+  territoryKm2?: number;
+  globalRank?: number;
+  likes: number;
+  comments: number;
+  likedByMe: boolean;
+  activityType: 'run' | 'ride';
+  isGroup: boolean;
+  isFollowing: boolean;
+}
+
+function normalizeFeedPost(raw: RawFeedPost): FeedPost {
+  return { ...raw, createdAt: formatRelativeTime(raw.createdAt) };
+}
+
+interface RawComment {
+  id: string;
+  postId: string;
+  userId: string;
+  userName: string;
+  userAvatarUrl: string;
+  text: string;
+  createdAt: string;
+  parentCommentId?: string;
+}
+
+function normalizeComment(raw: RawComment): Comment {
+  const { createdAt, ...rest } = raw;
+  return { ...rest, createdAtLabel: formatRelativeTime(createdAt) };
+}
+
+export interface UserSearchResult {
+  id: string;
+  name: string;
+  avatarUrl: string;
+  level: number;
+  location: string;
+  countryFlag: string;
+  isFollowing: boolean;
+}
+
 interface RawSavedRoute {
   id: string;
   name: string;
@@ -240,4 +301,66 @@ export const authApi = {
     authFetch<RawSavedRoute[]>('/routes').then((routes) => routes.map(normalizeSavedRoute)),
 
   deleteRoute: (authFetch: AuthFetch, id: string) => authFetch<void>(`/routes/${id}`, { method: 'DELETE' }),
+
+  // --- Social: feed, curtidas, comentários -------------------------------
+
+  listFeed: (authFetch: AuthFetch, scope: 'explore' | 'following' | 'groups', activityType: 'run' | 'ride' | 'all') =>
+    authFetch<RawFeedPost[]>(`/posts?scope=${scope}&activityType=${activityType}`).then((posts) =>
+      posts.map(normalizeFeedPost)
+    ),
+
+  createPost: (
+    authFetch: AuthFetch,
+    payload: { activityId?: string; title?: string; caption?: string; photoUrls: string[] }
+  ) => authFetch<{ id: string }>('/posts', { method: 'POST', body: JSON.stringify(payload) }),
+
+  likePost: (authFetch: AuthFetch, postId: string) =>
+    authFetch<void>(`/posts/${postId}/like`, { method: 'POST' }),
+
+  unlikePost: (authFetch: AuthFetch, postId: string) =>
+    authFetch<void>(`/posts/${postId}/like`, { method: 'DELETE' }),
+
+  listComments: (authFetch: AuthFetch, postId: string) =>
+    authFetch<RawComment[]>(`/posts/${postId}/comments`).then((comments) => comments.map(normalizeComment)),
+
+  addComment: (authFetch: AuthFetch, postId: string, text: string, parentCommentId?: string) =>
+    authFetch<RawComment>(`/posts/${postId}/comments`, {
+      method: 'POST',
+      body: JSON.stringify({ text, parentCommentId }),
+    }).then(normalizeComment),
+
+  deleteComment: (authFetch: AuthFetch, postId: string, commentId: string) =>
+    authFetch<void>(`/posts/${postId}/comments/${commentId}`, { method: 'DELETE' }),
+
+  // --- Social: seguir / buscar usuários -----------------------------------
+
+  followUser: (authFetch: AuthFetch, userId: string) =>
+    authFetch<void>(`/follows/${userId}`, { method: 'POST' }),
+
+  unfollowUser: (authFetch: AuthFetch, userId: string) =>
+    authFetch<void>(`/follows/${userId}`, { method: 'DELETE' }),
+
+  searchUsers: (authFetch: AuthFetch, term: string) =>
+    authFetch<UserSearchResult[]>(`/users/search?q=${encodeURIComponent(term)}`),
+
+  // --- Upload (dev/homolog — ver aviso em uploads.routes.ts no backend) --
+
+  uploadPhoto: async (authFetch: AuthFetch, localUri: string): Promise<string> => {
+    const form = new FormData();
+    const filename = localUri.split('/').pop() ?? 'photo.jpg';
+    const extension = filename.split('.').pop()?.toLowerCase();
+    const mimeType = extension === 'png' ? 'image/png' : extension === 'webp' ? 'image/webp' : 'image/jpeg';
+
+    // React Native aceita esse formato de objeto (uri/name/type) no lugar
+    // de um File/Blob de verdade — é a forma padrão do fetch com
+    // multipart no RN.
+    form.append('file', { uri: localUri, name: filename, type: mimeType } as any);
+
+    const { url } = await authFetch<{ url: string }>('/uploads', {
+      method: 'POST',
+      body: form,
+    });
+
+    return url;
+  },
 };

@@ -53,8 +53,6 @@ import { SavedRoutesProvider } from '../contexts/SavedRoutesContext';
 import { AuthProvider, useAuth } from '../contexts/AuthContext';
 import { ActiveCrewProvider } from '../contexts/ActiveCrewContext';
 import { FeaturedBadgeProvider } from '../contexts/FeaturedBadgeContext';
-import { CommentsProvider } from '../contexts/CommentsContext';
-import { UserPostsProvider } from '../contexts/UserPostsContext';
 import { GameModeProvider } from '../contexts/GameModeContext';
 import { GroupChatProvider } from '../contexts/GroupChatContext';
 import { MyLobbiesProvider } from '../contexts/MyLobbiesContext';
@@ -133,15 +131,11 @@ export default function Navigation() {
             <GroupChatProvider>
               <MyLobbiesProvider>
                 <FeaturedBadgeProvider>
-                  <CommentsProvider>
-                    <UserPostsProvider>
-                      <SavedRoutesProvider>
-                        <NavigationContainer>
-                          <RootNavigator />
-                        </NavigationContainer>
-                      </SavedRoutesProvider>
-                    </UserPostsProvider>
-                  </CommentsProvider>
+                  <SavedRoutesProvider>
+                    <NavigationContainer>
+                      <RootNavigator />
+                    </NavigationContainer>
+                  </SavedRoutesProvider>
                 </FeaturedBadgeProvider>
               </MyLobbiesProvider>
             </GroupChatProvider>

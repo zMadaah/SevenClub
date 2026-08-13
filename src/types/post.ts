@@ -23,6 +23,7 @@ export interface FeedPost {
   globalRank?: number;
   likes: number;
   comments: number;
+  likedByMe: boolean;
   activityType: ActivityType;
   isGroup: boolean;
   isFollowing: boolean;

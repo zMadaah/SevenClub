@@ -1,5 +1,5 @@
-import React , { useMemo, useState }from 'react';
-import { View, Image, Text, TouchableOpacity, FlatList } from 'react-native';
+import React, { useCallback, useEffect, useState } from 'react';
+import { View, Image, Text, TouchableOpacity, FlatList, ActivityIndicator, Alert } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useNavigation } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
@@ -7,7 +7,8 @@ import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { RootStackParamList } from '../../navigation/types';
 import PostCard from './components/PostCard';
 import FilterModal from './components/FilterModal';
-import { MOCK_FEED } from '../../services/mock/feed';
+import { useAuth } from '../../contexts/AuthContext';
+import { authApi, ApiError } from '../../services/api';
 import { styles } from './styles';
 
 import { FeedPost } from '../../types/post';
@@ -29,10 +30,14 @@ const ACTIVITY_OPTIONS = [
 
 export default function Social() {
   const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
+  const { authFetch } = useAuth();
   const [exploreScope, setExploreScope] = useState<ExploreScope>('explore');
   const [activityFilter, setActivityFilter] = useState<ActivityFilter>('all');
   const [exploreModalVisible, setExploreModalVisible] = useState(false);
   const [activityModalVisible, setActivityModalVisible] = useState(false);
+
+  const [feed, setFeed] = useState<FeedPost[]>([]);
+  const [loading, setLoading] = useState(true);
 
   const explorePillLabel =
     EXPLORE_OPTIONS.find((o) => o.value === exploreScope)?.label ?? 'Explorar';
@@ -42,14 +47,25 @@ export default function Social() {
       ? 'Todos'
       : ACTIVITY_OPTIONS.find((o) => o.value === activityFilter)?.label ?? 'Todos';
 
-  const filteredFeed = useMemo(() => {
-    return MOCK_FEED.filter((post) => {
-      if (exploreScope === 'groups' && !post.isGroup) return false;
-      if (exploreScope === 'following' && !post.isFollowing) return false;
-      if (activityFilter !== 'all' && post.activityType !== activityFilter) return false;
-      return true;
-    });
-  }, [exploreScope, activityFilter]);
+  const loadFeed = useCallback(
+    async (scope: ExploreScope, activityType: ActivityFilter) => {
+      setLoading(true);
+      try {
+        const posts = await authApi.listFeed(authFetch, scope, activityType);
+        setFeed(posts);
+      } catch (err) {
+        const message = err instanceof ApiError ? err.message : 'Não foi possível carregar o feed.';
+        Alert.alert('Ops', message);
+      } finally {
+        setLoading(false);
+      }
+    },
+    [authFetch]
+  );
+
+  useEffect(() => {
+    loadFeed(exploreScope, activityFilter);
+  }, [exploreScope, activityFilter, loadFeed]);
 
   return (
     <View style={styles.container}>
@@ -68,23 +84,23 @@ export default function Social() {
           </TouchableOpacity>
         </View>
 
-        {/* <TouchableOpacity style={styles.iconButton}>
-          <Ionicons name="search" size={20} color="#111" />
-        </TouchableOpacity> */}
-
         <TouchableOpacity style={styles.iconButton} onPress={() => navigation.navigate('CreatePost')}>
           <Ionicons name="add-circle-outline" size={20} color="#111" />
         </TouchableOpacity>
       </View>
 
-      {filteredFeed.length === 0 ? (
+      {loading && feed.length === 0 ? (
+        <View style={styles.emptyState}>
+          <ActivityIndicator color="#111" />
+        </View>
+      ) : feed.length === 0 ? (
         <View style={styles.emptyState}>
           <Ionicons name="images-outline" size={28} color="#999" />
           <Text style={styles.emptyText}>Nenhuma atividade com esse filtro ainda</Text>
         </View>
       ) : (
         <FlatList
-          data={filteredFeed}
+          data={feed}
           keyExtractor={(item) => item.id}
           contentContainerStyle={styles.list}
           showsVerticalScrollIndicator={false}
@@ -113,4 +129,3 @@ export default function Social() {
     </View>
   );
 }
-

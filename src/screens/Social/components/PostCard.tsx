@@ -3,7 +3,8 @@ import {  View,  Text,  Image,  TouchableOpacity,  ScrollView,  NativeSyntheticE
 import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
 
 import { FeedPost } from '../../../types/post';
-import { useComments } from '../../../contexts/CommentsContext';
+import { useAuth } from '../../../contexts/AuthContext';
+import { authApi, ApiError } from '../../../services/api';
 import CommentsModal from './CommentsModal';
 import { styles } from './PostCard.styles';
 
@@ -16,19 +17,34 @@ const CARD_HORIZONTAL_PADDING = 16 * 2; // paddingHorizontal da lista, dos dois 
 const PHOTO_WIDTH = SCREEN_WIDTH - CARD_HORIZONTAL_PADDING;
 
 export default function PostCard({ post }: PostCardProps) {
+  const { authFetch } = useAuth();
   const [activePhoto, setActivePhoto] = useState(0);
-  const [liked, setLiked] = useState(false);
+  const [liked, setLiked] = useState(post.likedByMe);
   const [likeCount, setLikeCount] = useState(post.likes);
   const [commentsVisible, setCommentsVisible] = useState(false);
+  const [commentCount, setCommentCount] = useState(post.comments);
   const [showRank, setShowRank] = useState(false);
 
-  const { getComments } = useComments();
-  const commentCount = getComments(post.id).length;
+  async function handleToggleLike() {
+    // Otimista: reage na hora, desfaz se a chamada falhar.
+    const wasLiked = liked;
+    setLiked(!wasLiked);
+    setLikeCount((prev) => (wasLiked ? prev - 1 : prev + 1));
 
-  function handleToggleLike() {
-    // TODO: trocar por chamada real em services/api.ts assim que existir
-    setLiked((prev) => !prev);
-    setLikeCount((prev) => (liked ? prev - 1 : prev + 1));
+    try {
+      if (wasLiked) {
+        await authApi.unlikePost(authFetch, post.id);
+      } else {
+        await authApi.likePost(authFetch, post.id);
+      }
+    } catch (err) {
+      setLiked(wasLiked);
+      setLikeCount((prev) => (wasLiked ? prev + 1 : prev - 1));
+      const message = err instanceof ApiError ? err.message : 'Não foi possível curtir agora.';
+      // silencioso de propósito pra não interromper o scroll do feed com
+      // um alerta por causa de uma curtida — o estado já volta sozinho
+      console.warn(message);
+    }
   }
 
   function handleScroll(e: NativeSyntheticEvent<NativeScrollEvent>) {
@@ -150,6 +166,7 @@ export default function PostCard({ post }: PostCardProps) {
         visible={commentsVisible}
         onClose={() => setCommentsVisible(false)}
         postId={post.id}
+        onCommentAdded={() => setCommentCount((prev) => prev + 1)}
       />
     </View>
   );

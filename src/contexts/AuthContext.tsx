@@ -1,12 +1,16 @@
 import React, { createContext, useContext, useState, useEffect, useCallback, useRef, ReactNode } from 'react';
 import * as SecureStore from 'expo-secure-store';
 import { api, request, ApiError, AuthSession } from '../services/api';
+import { decodeJwtUserId } from '../utils/jwt';
 
 const ACCESS_TOKEN_KEY = 'sevenclub_access_token';
 const REFRESH_TOKEN_KEY = 'sevenclub_refresh_token';
 
 interface AuthContextValue {
   isAuthenticated: boolean;
+  // id do usuário logado, lido direto do JWT — null enquanto não há
+  // sessão. Útil pra telas decidirem "isso é meu?" sem outra chamada de rede.
+  userId: string | null;
   // true enquanto tenta restaurar a sessão salva ao abrir o app — a tela
   // de navegação usa isso pra não piscar a tela de Login antes de saber
   // se já tem uma sessão válida guardada
@@ -24,6 +28,7 @@ const AuthContext = createContext<AuthContextValue | undefined>(undefined);
 
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [userId, setUserId] = useState<string | null>(null);
   const [isRestoring, setIsRestoring] = useState(true);
 
   // Tokens ficam numa ref, não em state: são lidos por authFetch a
@@ -36,6 +41,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     refreshTokenRef.current = session.refreshToken;
     await SecureStore.setItemAsync(ACCESS_TOKEN_KEY, session.accessToken);
     await SecureStore.setItemAsync(REFRESH_TOKEN_KEY, session.refreshToken);
+    setUserId(decodeJwtUserId(session.accessToken));
     setIsAuthenticated(true);
   }, []);
 
@@ -44,6 +50,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     refreshTokenRef.current = null;
     await SecureStore.deleteItemAsync(ACCESS_TOKEN_KEY);
     await SecureStore.deleteItemAsync(REFRESH_TOKEN_KEY);
+    setUserId(null);
     setIsAuthenticated(false);
   }, []);
 
@@ -117,7 +124,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   return (
     <AuthContext.Provider
-      value={{ isAuthenticated, isRestoring, signIn, signInWithTokens, signOut, authFetch }}
+      value={{ isAuthenticated, userId, isRestoring, signIn, signInWithTokens, signOut, authFetch }}
     >
       {children}
     </AuthContext.Provider>

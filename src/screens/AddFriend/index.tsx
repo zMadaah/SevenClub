@@ -1,34 +1,79 @@
-import React, { useMemo, useState } from 'react';
-import { View, Text, TextInput, TouchableOpacity, Image, FlatList } from 'react-native';
+import React, { useEffect, useState } from 'react';
+import { View, Text, TextInput, TouchableOpacity, Image, FlatList, ActivityIndicator, Alert } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useNavigation } from '@react-navigation/native';
 
-
 import FollowSuggestionCard from './components/FollowSuggestionsCard';
 import { MOCK_FOLLOW_SUGGESTIONS } from '../../services/mock/followSuggestions';
-import { MOCK_FRIENDS } from '../../services/mock/friends';
+import { useAuth } from '../../contexts/AuthContext';
+import { authApi, ApiError, UserSearchResult } from '../../services/api';
 import { colors } from '../../theme/colors';
 import { styles } from './styles';
 
+const SEARCH_DEBOUNCE_MS = 350;
+
 export default function AddFriend() {
   const navigation = useNavigation();
+  const { authFetch } = useAuth();
   const [query, setQuery] = useState('');
-  const [followedIds, setFollowedIds] = useState<string[]>([]);
+  const [searchResults, setSearchResults] = useState<UserSearchResult[]>([]);
+  const [searching, setSearching] = useState(false);
+  // Sugestões ("Não sabe quem seguir?") continuam mockadas de propósito —
+  // pra virar real, precisa de um critério de recomendação (amigos em
+  // comum, mesma região, etc.) que ainda não decidimos. O toggle aqui é
+  // só visual, não chama a API.
+  const [mockFollowedIds, setMockFollowedIds] = useState<string[]>([]);
 
-  const searchResults = useMemo(() => {
-    if (query.trim().length === 0) return [];
-    return MOCK_FRIENDS.filter((friend) =>
-      friend.name.toLowerCase().includes(query.trim().toLowerCase())
+  const isSearching = query.trim().length > 0;
+
+  useEffect(() => {
+    if (!isSearching) {
+      setSearchResults([]);
+      return;
+    }
+
+    const timeout = setTimeout(() => {
+      setSearching(true);
+      authApi
+        .searchUsers(authFetch, query.trim())
+        .then(setSearchResults)
+        .catch((err) => {
+          const message = err instanceof ApiError ? err.message : 'Não foi possível buscar.';
+          Alert.alert('Ops', message);
+        })
+        .finally(() => setSearching(false));
+    }, SEARCH_DEBOUNCE_MS);
+
+    return () => clearTimeout(timeout);
+  }, [query, isSearching, authFetch]);
+
+  async function handleToggleFollow(user: UserSearchResult) {
+    const wasFollowing = user.isFollowing;
+    // atualização otimista na lista de resultados
+    setSearchResults((prev) =>
+      prev.map((u) => (u.id === user.id ? { ...u, isFollowing: !wasFollowing } : u))
     );
-  }, [query]);
 
-  function toggleFollow(id: string) {
-    setFollowedIds((prev) =>
+    try {
+      if (wasFollowing) {
+        await authApi.unfollowUser(authFetch, user.id);
+      } else {
+        await authApi.followUser(authFetch, user.id);
+      }
+    } catch (err) {
+      setSearchResults((prev) =>
+        prev.map((u) => (u.id === user.id ? { ...u, isFollowing: wasFollowing } : u))
+      );
+      const message = err instanceof ApiError ? err.message : 'Não foi possível atualizar.';
+      Alert.alert('Ops', message);
+    }
+  }
+
+  function toggleMockFollow(id: string) {
+    setMockFollowedIds((prev) =>
       prev.includes(id) ? prev.filter((f) => f !== id) : [...prev, id]
     );
   }
-
-  const isSearching = query.trim().length > 0;
 
   return (
     <View style={styles.container}>
@@ -51,7 +96,11 @@ export default function AddFriend() {
       />
 
       {isSearching ? (
-        searchResults.length === 0 ? (
+        searching ? (
+          <View style={styles.emptyState}>
+            <ActivityIndicator color={colors.textPrimary} />
+          </View>
+        ) : searchResults.length === 0 ? (
           <View style={styles.emptyState}>
             <Ionicons name="search-outline" size={26} color={colors.textMuted} />
             <Text style={styles.emptyText}>Nenhum resultado para "{query}"</Text>
@@ -62,29 +111,26 @@ export default function AddFriend() {
             keyExtractor={(item) => item.id}
             contentContainerStyle={styles.resultsList}
             ItemSeparatorComponent={() => <View style={styles.separator} />}
-            renderItem={({ item }) => {
-              const isFollowing = followedIds.includes(item.id);
-              return (
-                <View style={styles.resultRow}>
-                  <Image source={{ uri: item.avatarUrl }} style={styles.resultAvatar} />
-                  <Text style={styles.resultName}>{item.name}</Text>
+            renderItem={({ item }) => (
+              <View style={styles.resultRow}>
+                <Image source={{ uri: item.avatarUrl }} style={styles.resultAvatar} />
+                <Text style={styles.resultName}>{item.name}</Text>
 
-                  <TouchableOpacity
-                    style={[styles.followButtonSmall, isFollowing && styles.followingButtonSmall]}
-                    onPress={() => toggleFollow(item.id)}
+                <TouchableOpacity
+                  style={[styles.followButtonSmall, item.isFollowing && styles.followingButtonSmall]}
+                  onPress={() => handleToggleFollow(item)}
+                >
+                  <Text
+                    style={[
+                      styles.followButtonSmallText,
+                      item.isFollowing && styles.followingButtonSmallText,
+                    ]}
                   >
-                    <Text
-                      style={[
-                        styles.followButtonSmallText,
-                        isFollowing && styles.followingButtonSmallText,
-                      ]}
-                    >
-                      {isFollowing ? 'SEGUINDO' : 'SEGUIR'}
-                    </Text>
-                  </TouchableOpacity>
-                </View>
-              );
-            }}
+                    {item.isFollowing ? 'SEGUINDO' : 'SEGUIR'}
+                  </Text>
+                </TouchableOpacity>
+              </View>
+            )}
           />
         )
       ) : (
@@ -97,8 +143,8 @@ export default function AddFriend() {
               <FollowSuggestionCard
                 key={person.id}
                 person={person}
-                following={followedIds.includes(person.id)}
-                onToggleFollow={() => toggleFollow(person.id)}
+                following={mockFollowedIds.includes(person.id)}
+                onToggleFollow={() => toggleMockFollow(person.id)}
               />
             ))}
           </View>

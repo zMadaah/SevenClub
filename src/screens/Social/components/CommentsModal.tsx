@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import {
   Modal,
   View,
@@ -8,13 +8,14 @@ import {
   Image,
   FlatList,
   Alert,
+  ActivityIndicator,
   KeyboardAvoidingView,
   Platform,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 
-import { useComments } from '../../../contexts/CommentsContext';
-import { CURRENT_USER_ID } from '../../../constants/currentUser';
+import { useAuth } from '../../../contexts/AuthContext';
+import { authApi, ApiError } from '../../../services/api';
 import { Comment } from '../../../types/comment';
 import { styles } from './CommentsModal.styles';
 
@@ -22,30 +23,54 @@ interface CommentsModalProps {
   visible: boolean;
   onClose: () => void;
   postId: string;
+  onCommentAdded?: () => void;
 }
 
-export default function CommentsModal({ visible, onClose, postId }: CommentsModalProps) {
-  const { getComments, addComment, deleteComment } = useComments();
+export default function CommentsModal({ visible, onClose, postId, onCommentAdded }: CommentsModalProps) {
+  const { authFetch, userId } = useAuth();
+  const [comments, setComments] = useState<Comment[]>([]);
+  const [loading, setLoading] = useState(true);
   const [text, setText] = useState('');
+  const [sending, setSending] = useState(false);
   const [replyingTo, setReplyingTo] = useState<Comment | null>(null);
 
-  const allComments = getComments(postId);
-  const topLevel = allComments.filter((c) => !c.parentCommentId);
+  useEffect(() => {
+    if (!visible) return;
+    setLoading(true);
+    authApi
+      .listComments(authFetch, postId)
+      .then(setComments)
+      .catch((err) => {
+        const message = err instanceof ApiError ? err.message : 'Não foi possível carregar os comentários.';
+        Alert.alert('Ops', message);
+      })
+      .finally(() => setLoading(false));
+  }, [visible, postId, authFetch]);
+
+  const topLevel = comments.filter((c) => !c.parentCommentId);
 
   function repliesTo(commentId: string) {
-    return allComments.filter((c) => c.parentCommentId === commentId);
+    return comments.filter((c) => c.parentCommentId === commentId);
   }
 
-  function handleSend() {
-    if (text.trim().length === 0) return;
-    // TODO: trocar por chamada real em services/api.ts assim que existir —
-    // hoje addComment só grava em memória, via CommentsContext
-    addComment(postId, text.trim(), replyingTo?.id);
-    setText('');
-    setReplyingTo(null);
+  async function handleSend() {
+    if (text.trim().length === 0 || sending) return;
+    setSending(true);
+    try {
+      const comment = await authApi.addComment(authFetch, postId, text.trim(), replyingTo?.id);
+      setComments((prev) => [...prev, comment]);
+      onCommentAdded?.();
+      setText('');
+      setReplyingTo(null);
+    } catch (err) {
+      const message = err instanceof ApiError ? err.message : 'Não foi possível enviar o comentário.';
+      Alert.alert('Ops', message);
+    } finally {
+      setSending(false);
+    }
   }
 
-  function handleReport(comment: Comment) {
+  function handleReport(_comment: Comment) {
     Alert.alert(
       'Denunciar comentário',
       'Nossa equipe vai revisar esse comentário. Deseja continuar?',
@@ -54,9 +79,9 @@ export default function CommentsModal({ visible, onClose, postId }: CommentsModa
         {
           text: 'Denunciar',
           style: 'destructive',
-          onPress: () => {
-            // TODO: enviar denúncia real em services/api.ts assim que existir
-          },
+          // TODO: endpoint de denúncia ainda não existe no backend —
+          // moderação de conteúdo fica pra uma rodada futura.
+          onPress: () => {},
         },
       ]
     );
@@ -65,12 +90,28 @@ export default function CommentsModal({ visible, onClose, postId }: CommentsModa
   function handleDelete(comment: Comment) {
     Alert.alert('Apagar comentário', 'Essa ação não pode ser desfeita.', [
       { text: 'Cancelar', style: 'cancel' },
-      { text: 'Apagar', style: 'destructive', onPress: () => deleteComment(comment.id) },
+      {
+        text: 'Apagar',
+        style: 'destructive',
+        onPress: async () => {
+          try {
+            await authApi.deleteComment(authFetch, postId, comment.id);
+            // apaga o comentário e qualquer resposta direta a ele — o
+            // backend já faz isso em cascata, só espelha aqui na tela
+            setComments((prev) =>
+              prev.filter((c) => c.id !== comment.id && c.parentCommentId !== comment.id)
+            );
+          } catch (err) {
+            const message = err instanceof ApiError ? err.message : 'Não foi possível apagar o comentário.';
+            Alert.alert('Ops', message);
+          }
+        },
+      },
     ]);
   }
 
   function renderComment(comment: Comment, isReply = false) {
-    const isOwn = comment.userId === CURRENT_USER_ID;
+    const isOwn = comment.userId === userId;
 
     return (
       <View key={comment.id}>
@@ -120,7 +161,11 @@ export default function CommentsModal({ visible, onClose, postId }: CommentsModa
             </TouchableOpacity>
           </View>
 
-          {topLevel.length === 0 ? (
+          {loading ? (
+            <View style={styles.emptyState}>
+              <ActivityIndicator color="#111" />
+            </View>
+          ) : topLevel.length === 0 ? (
             <View style={styles.emptyState}>
               <Ionicons name="chatbubble-outline" size={26} color="#999" />
               <Text style={styles.emptyText}>Seja o primeiro a comentar</Text>
@@ -153,9 +198,9 @@ export default function CommentsModal({ visible, onClose, postId }: CommentsModa
               multiline
             />
             <TouchableOpacity
-              style={[styles.sendButton, text.trim().length === 0 && styles.sendButtonDisabled]}
+              style={[styles.sendButton, (text.trim().length === 0 || sending) && styles.sendButtonDisabled]}
               onPress={handleSend}
-              disabled={text.trim().length === 0}
+              disabled={text.trim().length === 0 || sending}
             >
               <Ionicons name="arrow-up" size={16} color="#061414" />
             </TouchableOpacity>
