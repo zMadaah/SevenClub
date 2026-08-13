@@ -95,6 +95,11 @@ export const styles = StyleSheet.create({
     padding: 18,
     marginBottom: 24,
   },
+  statsLoading: {
+    height: 108,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
   statsRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',

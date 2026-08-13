@@ -12,12 +12,12 @@ import { useActivityTracker } from '../../hooks/useActivityTracker';
 import { formatDuration } from '../../utils/time';
 import { isLoopClosed, polygonArea } from '../../utils/geo';
 
-import { CompletedActivity } from '../../types/activity';
 import { ActivityType } from '../../types/lobby';
 import { SavedRoute } from '../../types/route';
 
 import { useSavedRoutes } from '../../contexts/SavedRoutesContext';
-import { ApiError } from '../../services/api';
+import { useAuth } from '../../contexts/AuthContext';
+import { authApi, ApiError } from '../../services/api';
 
 import ActivityStatsModal from './components/ActivityStatsModal';
 import ActivitySummaryModal from './components/ActivitySummaryModal';
@@ -30,6 +30,7 @@ import { styles } from './styles';
 
 export default function ActivityStart() {
   const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
+  const { authFetch } = useAuth();
   const tracker = useActivityTracker();
 
   const [summaryVisible, setSummaryVisible] = useState(false);
@@ -100,25 +101,28 @@ export default function ActivityStart() {
     if (activityName.trim().length === 0 || saving) return;
     setSaving(true);
     try {
-      const completed: CompletedActivity = {
-        id: Date.now().toString(),
-        name: activityName.trim(),
-        points: tracker.points,
-        distanceMeters: tracker.distanceMeters,
-        durationSeconds: tracker.elapsedSeconds,
-        paceLabel: tracker.paceLabel,
-        loopClosed,
-        captureM2,
-        createdAt: Date.now(),
-      };
+      // O tracker não guarda o instante real de início (nem os gaps de
+      // pausa), mas a subtração abaixo garante que o backend recalcule a
+      // MESMA duração que o cronômetro mostrou — é o que importa pro pace
+      // e pra duration_seconds, mesmo sem um timestamp de início "real".
+      const endedAt = new Date();
+      const startedAt = new Date(endedAt.getTime() - tracker.elapsedSeconds * 1000);
 
-      // TODO: trocar por chamada real em services/api.ts assim que existir
-      await new Promise((resolve) => setTimeout(resolve, 400));
+      await authApi.createActivity(authFetch, {
+        name: activityName.trim(),
+        activityType,
+        points: tracker.points,
+        startedAt: startedAt.toISOString(),
+        endedAt: endedAt.toISOString(),
+      });
 
       setSummaryVisible(false);
       setActivityName('');
       tracker.reset();
       navigation.goBack();
+    } catch (err) {
+      const message = err instanceof ApiError ? err.message : 'Não foi possível salvar a atividade.';
+      Alert.alert('Ops', message);
     } finally {
       setSaving(false);
     }

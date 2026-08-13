@@ -55,6 +55,11 @@ export const styles = StyleSheet.create({
     alignItems: 'center',
     marginBottom: 20,
   },
+  loadingBlock: {
+    paddingVertical: 60,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
   memberLabel: {
     fontSize: 12,
     fontWeight: '700',

@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { View, Text, Image, TouchableOpacity, ScrollView } from 'react-native';
+import React, { useCallback, useEffect, useState } from 'react';
+import { View, Text, Image, TouchableOpacity, ScrollView, ActivityIndicator, Alert } from 'react-native';
 import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
 import { useNavigation } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
@@ -7,21 +7,57 @@ import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { RootStackParamList } from '../../navigation/types';
 import { ActivityType } from '../../types/lobby';
 import { ActivityStats } from '../../types/stats';
+import { useAuth } from '../../contexts/AuthContext';
+import { authApi, ApiError } from '../../services/api';
 import { colors } from '../../theme/colors';
 import { styles } from './styles';
 
-// TODO: trocar por chamada real em services/api.ts assim que existir —
-// por enquanto reflete o estado real de uma conta nova (tudo zerado)
-const EMPTY_STATS: Record<ActivityType, ActivityStats> = {
-  run: { currentTerritoryM2: 0, globalRank: null, totalSteals: 0, countryRank: null },
-  ride: { currentTerritoryM2: 0, globalRank: null, totalSteals: 0, countryRank: null },
+const EMPTY_STATS: ActivityStats = {
+  currentTerritoryM2: 0,
+  globalRank: null,
+  totalSteals: 0,
+  countryRank: null,
 };
 
 export default function MyStats() {
   const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
+  const { authFetch } = useAuth();
   const [activityType, setActivityType] = useState<ActivityType>('run');
+  const [stats, setStats] = useState<ActivityStats>(EMPTY_STATS);
+  const [activitiesCount, setActivitiesCount] = useState(0);
+  const [loadingStats, setLoadingStats] = useState(true);
 
-  const stats = EMPTY_STATS[activityType];
+  // Total de atividades não depende do toggle corrida/pedal (fica acima
+  // dele na tela), então busca uma vez só, à parte.
+  useEffect(() => {
+    authApi
+      .listActivities(authFetch)
+      .then((activities) => setActivitiesCount(activities.length))
+      .catch(() => {
+        // não é grave o bastante pra interromper a tela com um alerta —
+        // o contador só fica em 0 se isso falhar
+      });
+  }, [authFetch]);
+
+  const loadStats = useCallback(
+    async (type: ActivityType) => {
+      setLoadingStats(true);
+      try {
+        const result = await authApi.myStats(authFetch, type);
+        setStats(result);
+      } catch (err) {
+        const message = err instanceof ApiError ? err.message : 'Não foi possível carregar suas estatísticas.';
+        Alert.alert('Ops', message);
+      } finally {
+        setLoadingStats(false);
+      }
+    },
+    [authFetch]
+  );
+
+  useEffect(() => {
+    loadStats(activityType);
+  }, [activityType, loadStats]);
 
   return (
     <View style={styles.container}>
@@ -49,7 +85,7 @@ export default function MyStats() {
           </View>
           <View style={styles.summaryBlock}>
             <Text style={styles.summaryLabel}>Atividades</Text>
-            <Text style={styles.summaryValue}>0</Text>
+            <Text style={styles.summaryValue}>{activitiesCount}</Text>
           </View>
         </View>
       </View>
@@ -90,37 +126,45 @@ export default function MyStats() {
         </View>
 
         <View style={styles.statsCard}>
-          <View style={styles.statsRow}>
-            <View style={styles.statBlock}>
-              <View style={styles.statLabelRow}>
-                <Ionicons name="flag" size={14} color={colors.accent} />
-                <Text style={styles.statLabel}>território atual</Text>
+          {loadingStats ? (
+            <View style={styles.statsLoading}>
+              <ActivityIndicator color={colors.accent} />
+            </View>
+          ) : (
+            <>
+              <View style={styles.statsRow}>
+                <View style={styles.statBlock}>
+                  <View style={styles.statLabelRow}>
+                    <Ionicons name="flag" size={14} color={colors.accent} />
+                    <Text style={styles.statLabel}>território atual</Text>
+                  </View>
+                  <Text style={styles.statValue}>
+                    {stats.currentTerritoryM2.toFixed(1)}{' '}
+                    <Text style={styles.statUnit}>m²</Text>
+                  </Text>
+                </View>
+
+                <View style={styles.statBlockRight}>
+                  <Text style={styles.statLabel}>global</Text>
+                  <Text style={styles.statValueSmall}>{stats.globalRank ?? 'N/D'}</Text>
+                </View>
               </View>
-              <Text style={styles.statValue}>
-                {stats.currentTerritoryM2.toFixed(1)}{' '}
-                <Text style={styles.statUnit}>m²</Text>
-              </Text>
-            </View>
 
-            <View style={styles.statBlockRight}>
-              <Text style={styles.statLabel}>global</Text>
-              <Text style={styles.statValueSmall}>{stats.globalRank ?? 'N/D'}</Text>
-            </View>
-          </View>
+              <View style={styles.statsDivider} />
 
-          <View style={styles.statsDivider} />
+              <View style={styles.statsRow}>
+                <View style={styles.statBlock}>
+                  <Text style={styles.statLabel}>total de roubos</Text>
+                  <Text style={styles.statValue}>{stats.totalSteals}</Text>
+                </View>
 
-          <View style={styles.statsRow}>
-            <View style={styles.statBlock}>
-              <Text style={styles.statLabel}>total de roubos</Text>
-              <Text style={styles.statValue}>{stats.totalSteals}</Text>
-            </View>
-
-            <View style={styles.statBlockRight}>
-              <Text style={styles.statLabel}>país</Text>
-              <Text style={styles.statValueSmall}>{stats.countryRank ?? 'N/D'}</Text>
-            </View>
-          </View>
+                <View style={styles.statBlockRight}>
+                  <Text style={styles.statLabel}>país</Text>
+                  <Text style={styles.statValueSmall}>{stats.countryRank ?? 'N/D'}</Text>
+                </View>
+              </View>
+            </>
+          )}
         </View>
 
         <View style={styles.menu}>

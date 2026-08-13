@@ -1,10 +1,12 @@
-import React, { useMemo, useState } from 'react';
-import { View, Text, TouchableOpacity, FlatList } from 'react-native';
+import React, { useEffect, useMemo, useState } from 'react';
+import { View, Text, TouchableOpacity, FlatList, ActivityIndicator, Alert } from 'react-native';
 import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
 import { useNavigation } from '@react-navigation/native';
 
 import ActivityCard from './components/ActivityCard';
-import { MOCK_ACTIVITY_FEED } from '../../services/mock/activityFeed';
+import { useAuth } from '../../contexts/AuthContext';
+import { authApi, ApiError } from '../../services/api';
+import { ActivitySummary } from '../../types/activity';
 import { ActivityType } from '../../types/lobby';
 import { colors } from '../../theme/colors';
 import { styles } from './styles';
@@ -13,12 +15,26 @@ type FilterKey = 'all' | ActivityType;
 
 export default function ViewActivities() {
   const navigation = useNavigation();
+  const { authFetch } = useAuth();
   const [filter, setFilter] = useState<FilterKey>('all');
+  const [activities, setActivities] = useState<ActivitySummary[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    authApi
+      .listActivities(authFetch)
+      .then(setActivities)
+      .catch((err) => {
+        const message = err instanceof ApiError ? err.message : 'Não foi possível carregar suas atividades.';
+        Alert.alert('Ops', message);
+      })
+      .finally(() => setLoading(false));
+  }, [authFetch]);
 
   const filteredItems = useMemo(() => {
-    if (filter === 'all') return MOCK_ACTIVITY_FEED;
-    return MOCK_ACTIVITY_FEED.filter((item) => item.activityType === filter);
-  }, [filter]);
+    if (filter === 'all') return activities;
+    return activities.filter((item) => item.activityType === filter);
+  }, [activities, filter]);
 
   function cycleFilter() {
     setFilter((prev) => (prev === 'all' ? 'run' : prev === 'run' ? 'ride' : 'all'));
@@ -49,14 +65,14 @@ export default function ViewActivities() {
             <Text style={styles.filterPillText}>{filterLabel}</Text>
             <Ionicons name="chevron-down" size={12} color={colors.textSecondary} />
           </TouchableOpacity>
-
-          <TouchableOpacity style={styles.iconButton}>
-            <Ionicons name="search" size={18} color={colors.textPrimary} />
-          </TouchableOpacity>
         </View>
       </View>
 
-      {filteredItems.length === 0 ? (
+      {loading ? (
+        <View style={styles.emptyState}>
+          <ActivityIndicator color={colors.textPrimary} />
+        </View>
+      ) : filteredItems.length === 0 ? (
         <View style={styles.emptyState}>
           <Ionicons name="map-outline" size={28} color={colors.textMuted} />
           <Text style={styles.emptyText}>Nenhuma atividade registrada ainda</Text>
@@ -67,7 +83,7 @@ export default function ViewActivities() {
           keyExtractor={(item) => item.id}
           contentContainerStyle={styles.list}
           showsVerticalScrollIndicator={false}
-          ItemSeparatorComponent={() => <View style={{ height: 16 }} />}
+          ItemSeparatorComponent={() => <View style={{ height: 12 }} />}
           renderItem={({ item }) => <ActivityCard item={item} />}
         />
       )}

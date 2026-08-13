@@ -1,5 +1,8 @@
 import { LatLng } from 'react-native-maps';
 import { SavedRoute } from '../types/route';
+import { CompletedActivity, ActivitySummary } from '../types/activity';
+import { ActivityStats } from '../types/stats';
+import { ActivityHistory } from '../types/history';
 
 // EXPO_PUBLIC_* fica embutido no bundle em tempo de build — é assim que o
 // Expo expõe env vars pro código do cliente. Configure no .env (raiz do
@@ -155,6 +158,30 @@ export const api = {
 // vencido (401), renova com o refresh token e repete a chamada sozinho.
 export type AuthFetch = <T = any>(path: string, options?: RequestInit) => Promise<T>;
 
+interface RawActivitySummary {
+  id: string;
+  name: string;
+  activityType: 'run' | 'ride';
+  distanceMeters: number;
+  durationSeconds: number;
+  paceLabel: string;
+  loopClosed: boolean;
+  captureM2: number;
+  createdAt: string;
+}
+
+interface RawCompletedActivity extends RawActivitySummary {
+  points: Point[];
+}
+
+function normalizeActivitySummary(raw: RawActivitySummary): ActivitySummary {
+  return { ...raw, createdAt: new Date(raw.createdAt).getTime() };
+}
+
+function normalizeCompletedActivity(raw: RawCompletedActivity): CompletedActivity {
+  return { ...raw, createdAt: new Date(raw.createdAt).getTime() };
+}
+
 interface RawSavedRoute {
   id: string;
   name: string;
@@ -183,17 +210,26 @@ export const authApi = {
       startedAt: string;
       endedAt: string;
     }
-  ) => authFetch<any>('/activities', { method: 'POST', body: JSON.stringify(payload) }),
+  ) =>
+    authFetch<RawCompletedActivity>('/activities', {
+      method: 'POST',
+      body: JSON.stringify(payload),
+    }).then(normalizeCompletedActivity),
 
-  listActivities: (authFetch: AuthFetch) => authFetch<any[]>('/activities'),
+  listActivities: (authFetch: AuthFetch) =>
+    authFetch<RawActivitySummary[]>('/activities').then((items) => items.map(normalizeActivitySummary)),
 
-  getActivity: (authFetch: AuthFetch, id: string) => authFetch<any>(`/activities/${id}`),
+  getActivity: (authFetch: AuthFetch, id: string) =>
+    authFetch<RawCompletedActivity>(`/activities/${id}`).then(normalizeCompletedActivity),
 
   listTerritory: (authFetch: AuthFetch, activityType: 'run' | 'ride') =>
     authFetch<any[]>(`/territory?activityType=${activityType}`),
 
   myStats: (authFetch: AuthFetch, activityType: 'run' | 'ride') =>
-    authFetch<any>(`/stats/me?activityType=${activityType}`),
+    authFetch<ActivityStats>(`/stats/me?activityType=${activityType}`),
+
+  myHistory: (authFetch: AuthFetch, activityType: 'run' | 'ride') =>
+    authFetch<ActivityHistory>(`/stats/history?activityType=${activityType}`),
 
   createRoute: (authFetch: AuthFetch, payload: { name: string; points: Point[] | LatLng[] }) =>
     authFetch<RawSavedRoute>('/routes', { method: 'POST', body: JSON.stringify(payload) }).then(
