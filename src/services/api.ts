@@ -314,6 +314,9 @@ export const authApi = {
     payload: { activityId?: string; title?: string; caption?: string; photoUrls: string[] }
   ) => authFetch<{ id: string }>('/posts', { method: 'POST', body: JSON.stringify(payload) }),
 
+  deletePost: (authFetch: AuthFetch, postId: string) =>
+    authFetch<void>(`/posts/${postId}`, { method: 'DELETE' }),
+
   likePost: (authFetch: AuthFetch, postId: string) =>
     authFetch<void>(`/posts/${postId}/like`, { method: 'POST' }),
 

@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import {  View,  Text,  Image,  TouchableOpacity,  ScrollView,  NativeSyntheticEvent,  NativeScrollEvent,  Dimensions,} from 'react-native';
+import {  View,  Text,  Image,  TouchableOpacity,  ScrollView,  NativeSyntheticEvent,  NativeScrollEvent,  Dimensions,  Alert,} from 'react-native';
 import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
 
 import { FeedPost } from '../../../types/post';
@@ -10,20 +10,63 @@ import { styles } from './PostCard.styles';
 
 interface PostCardProps {
   post: FeedPost;
+  // Chamado depois de apagar com sucesso, pra tela de feed tirar o post
+  // da lista local (o backend já apagou, isso só sincroniza a UI).
+  onDeleted?: (postId: string) => void;
 }
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 const CARD_HORIZONTAL_PADDING = 16 * 2; // paddingHorizontal da lista, dos dois lados
 const PHOTO_WIDTH = SCREEN_WIDTH - CARD_HORIZONTAL_PADDING;
 
-export default function PostCard({ post }: PostCardProps) {
-  const { authFetch } = useAuth();
+export default function PostCard({ post, onDeleted }: PostCardProps) {
+  const { authFetch, userId } = useAuth();
   const [activePhoto, setActivePhoto] = useState(0);
   const [liked, setLiked] = useState(post.likedByMe);
   const [likeCount, setLikeCount] = useState(post.likes);
   const [commentsVisible, setCommentsVisible] = useState(false);
   const [commentCount, setCommentCount] = useState(post.comments);
   const [showRank, setShowRank] = useState(false);
+  const [deleting, setDeleting] = useState(false);
+
+  const isOwnPost = post.runner.id === userId;
+
+  async function handleDelete() {
+    setDeleting(true);
+    try {
+      await authApi.deletePost(authFetch, post.id);
+      onDeleted?.(post.id);
+    } catch (err) {
+      const message = err instanceof ApiError ? err.message : 'Não foi possível excluir o post.';
+      Alert.alert('Ops', message);
+    } finally {
+      setDeleting(false);
+    }
+  }
+
+  function handleReport() {
+    Alert.alert('Denunciar post', 'Nossa equipe vai revisar esse post. Deseja continuar?', [
+      { text: 'Cancelar', style: 'cancel' },
+      {
+        text: 'Denunciar',
+        style: 'destructive',
+        // TODO: endpoint de denúncia ainda não existe no backend —
+        // moderação de conteúdo fica pra uma rodada futura.
+        onPress: () => {},
+      },
+    ]);
+  }
+
+  function handleMenuPress() {
+    if (isOwnPost) {
+      Alert.alert('Excluir post', 'Essa ação não pode ser desfeita.', [
+        { text: 'Cancelar', style: 'cancel' },
+        { text: 'Excluir', style: 'destructive', onPress: handleDelete },
+      ]);
+    } else {
+      handleReport();
+    }
+  }
 
   async function handleToggleLike() {
     // Otimista: reage na hora, desfaz se a chamada falhar.
@@ -69,7 +112,11 @@ export default function PostCard({ post }: PostCardProps) {
           </Text>
         </View>
 
-        <TouchableOpacity hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
+        <TouchableOpacity
+          hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+          onPress={handleMenuPress}
+          disabled={deleting}
+        >
           <Ionicons name="ellipsis-horizontal" size={18} color="#888" />
         </TouchableOpacity>
       </View>

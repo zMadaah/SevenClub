@@ -70,7 +70,9 @@ export default function Social() {
   return (
     <View style={styles.container}>
       <View style={styles.topBar}>
-        <Image source={{ uri: 'https://i.pravatar.cc/200?img=10' }} style={styles.avatar} />
+        <TouchableOpacity onPress={() => navigation.navigate('Profile')}>
+          <Image source={{ uri: 'https://i.pravatar.cc/200?img=10' }} style={styles.avatar} />
+        </TouchableOpacity>
 
         <View style={styles.filters}>
           <TouchableOpacity style={styles.filterPill} onPress={() => setExploreModalVisible(true)}>
@@ -105,7 +107,12 @@ export default function Social() {
           contentContainerStyle={styles.list}
           showsVerticalScrollIndicator={false}
           ItemSeparatorComponent={() => <View style={{ height: 16 }} />}
-          renderItem={({ item }) => <PostCard post={item} />}
+          renderItem={({ item }) => (
+            <PostCard
+              post={item}
+              onDeleted={(postId) => setFeed((prev) => prev.filter((p) => p.id !== postId))}
+            />
+          )}
         />
       )}
 
