@@ -1,5 +1,5 @@
-import React, { useMemo, useState } from 'react';
-import { View, Text, ScrollView, TouchableOpacity } from 'react-native';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import { View, Text, ScrollView, TouchableOpacity, ActivityIndicator, Alert } from 'react-native';
 import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
 import { useNavigation } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
@@ -8,16 +8,13 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { RootStackParamList } from '../../navigation/types';
 import {
   MOCK_CREW_LEADERBOARD,
-  MOCK_COUNTRY_POOL,
-  MOCK_AREA_LEADERBOARD,
-  MOCK_MY_RANK,
   MOCK_MY_CREW_RANK,
-  USER_COUNTRY_NAME,
-  USER_COUNTRY_CODE,
 } from '../../services/mock/leaderboard';
 import { LeaderboardEntry, MyRankEntry, Scope } from '../../types/leaderboard';
 import { ActivityType } from '../../types/lobby';
 import { useActiveCrew } from '../../contexts/ActiveCrewContext';
+import { useAuth } from '../../contexts/AuthContext';
+import { authApi, ApiError } from '../../services/api';
 import { colors } from '../../theme/colors';
 import { styles } from './styles';
 
@@ -28,29 +25,49 @@ import MyRankRow from './components/MyRankRow';
 const FALLBACK_CREW_PICTURE =
   'https://images.unsplash.com/photo-1552674605-db6ffd4facb5?w=200';
 
-function reRank(entries: LeaderboardEntry[]): LeaderboardEntry[] {
-  return [...entries]
-    .sort((a, b) => b.territoryKm2 - a.territoryKm2)
-    .map((entry, index) => ({ ...entry, rank: index + 1 }));
-}
-
 export default function Leaderboard() {
   const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
   const insets = useSafeAreaInsets();
   const { activeCrew } = useActiveCrew();
+  const { authFetch } = useAuth();
   const [activityType, setActivityType] = useState<ActivityType>('run');
-  const [scope, setScope] = useState<Scope>('crew');
+  const [scope, setScope] = useState<Scope>('country');
 
+  // Crew ainda não existe de verdade no backend — continua mockado até
+  // esse subsistema ser construído (tem chat, entrada/saída de membros
+  // etc., é uma frente própria).
   const crewList = MOCK_CREW_LEADERBOARD[activityType];
-  const countryPool = MOCK_COUNTRY_POOL[activityType];
-  const areaList = MOCK_AREA_LEADERBOARD[activityType];
+
+  const [remoteEntries, setRemoteEntries] = useState<LeaderboardEntry[]>([]);
+  const [remoteMyRank, setRemoteMyRank] = useState<MyRankEntry | null>(null);
+  const [loading, setLoading] = useState(false);
+
+  const loadLeaderboard = useCallback(
+    async (currentScope: Scope, type: ActivityType) => {
+      if (currentScope === 'crew') return;
+      setLoading(true);
+      try {
+        const result = await authApi.getLeaderboard(authFetch, currentScope, type);
+        setRemoteEntries(result.entries);
+        setRemoteMyRank(result.myRank);
+      } catch (err) {
+        const message = err instanceof ApiError ? err.message : 'Não foi possível carregar o ranking.';
+        Alert.alert('Ops', message);
+      } finally {
+        setLoading(false);
+      }
+    },
+    [authFetch]
+  );
+
+  useEffect(() => {
+    loadLeaderboard(scope, activityType);
+  }, [scope, activityType, loadLeaderboard]);
 
   const visibleList = useMemo(() => {
     if (scope === 'crew') return crewList;
-    if (scope === 'area') return areaList;
-    if (scope === 'country') return reRank(countryPool.filter((e) => e.countryCode === USER_COUNTRY_CODE));
-    return []; // 'friends' — sem dado real ainda
-  }, [crewList, areaList, countryPool, scope]);
+    return remoteEntries;
+  }, [scope, crewList, remoteEntries]);
 
   const topThree = visibleList.slice(0, 3);
   const rest = visibleList.slice(3);
@@ -73,8 +90,8 @@ export default function Leaderboard() {
   let myRank: MyRankEntry | null = null;
   if (scope === 'crew') {
     myRank = myCrewRank;
-  } else if (scope === 'country' || scope === 'area') {
-    myRank = MOCK_MY_RANK[activityType][scope];
+  } else {
+    myRank = remoteMyRank;
   }
 
   function toggleActivityType() {
@@ -83,7 +100,7 @@ export default function Leaderboard() {
 
   const SCOPE_TABS: { value: Scope; label: string }[] = [
     { value: 'area', label: 'Área' },
-    { value: 'country', label: USER_COUNTRY_NAME },
+    { value: 'country', label: 'País' },
     { value: 'crew', label: 'Crew' },
     { value: 'friends', label: 'Amigos' },
   ];
@@ -130,7 +147,11 @@ export default function Leaderboard() {
         })}
       </View>
 
-      {scope === 'friends' ? (
+      {loading ? (
+        <View style={styles.emptyState}>
+          <ActivityIndicator color={colors.textPrimary} />
+        </View>
+      ) : scope === 'friends' && visibleList.length === 0 ? (
         <View style={styles.emptyState}>
           <Ionicons name="people-outline" size={28} color={colors.textMuted} />
           <Text style={styles.emptyTitle}>Você ainda não segue ninguém</Text>
@@ -143,6 +164,16 @@ export default function Leaderboard() {
           >
             <Text style={styles.emptyButtonText}>ADICIONAR AMIGOS</Text>
           </TouchableOpacity>
+        </View>
+      ) : (scope === 'country' || scope === 'area') && visibleList.length === 0 ? (
+        <View style={styles.emptyState}>
+          <Ionicons name="location-outline" size={28} color={colors.textMuted} />
+          <Text style={styles.emptyTitle}>Ninguém por aqui ainda</Text>
+          <Text style={styles.emptyText}>
+            {scope === 'country'
+              ? 'Complete seu país no perfil para entrar nesse ranking.'
+              : 'Complete sua localização no perfil para entrar nesse ranking.'}
+          </Text>
         </View>
       ) : (
         <ScrollView

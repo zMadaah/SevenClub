@@ -5,6 +5,7 @@ import { ActivityStats } from '../types/stats';
 import { ActivityHistory } from '../types/history';
 import { FeedPost } from '../types/post';
 import { Comment } from '../types/comment';
+import { LeaderboardEntry, MyRankEntry } from '../types/leaderboard';
 import { formatRelativeTime } from '../utils/time';
 
 // EXPO_PUBLIC_* fica embutido no bundle em tempo de build — é assim que o
@@ -233,6 +234,11 @@ function normalizeComment(raw: RawComment): Comment {
   return { ...rest, createdAtLabel: formatRelativeTime(createdAt) };
 }
 
+export interface LeaderboardResponse {
+  entries: LeaderboardEntry[];
+  myRank: MyRankEntry | null;
+}
+
 export interface UserSearchResult {
   id: string;
   name: string;
@@ -345,6 +351,21 @@ export const authApi = {
 
   searchUsers: (authFetch: AuthFetch, term: string) =>
     authFetch<UserSearchResult[]>(`/users/search?q=${encodeURIComponent(term)}`),
+
+  // --- Ranking -------------------------------------------------------------
+
+  getLeaderboard: (
+    authFetch: AuthFetch,
+    scope: 'country' | 'area' | 'friends',
+    activityType: 'run' | 'ride'
+  ) => authFetch<LeaderboardResponse>(`/leaderboard?scope=${scope}&activityType=${activityType}`),
+
+  // --- Perfil ----------------------------------------------------------------
+
+  updateMyProfile: (
+    authFetch: AuthFetch,
+    input: { displayName?: string; bio?: string; avatarUrl?: string; location?: string; countryCode?: string }
+  ) => authFetch<any>('/auth/me', { method: 'PATCH', body: JSON.stringify(input) }),
 
   // --- Upload (dev/homolog — ver aviso em uploads.routes.ts no backend) --
 
