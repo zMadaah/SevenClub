@@ -9,13 +9,17 @@ import Header from '../../Header';
 import Map from '../../Map';
 import LobbyListModal from './components/LobbyListModal';
 import { useActiveLobby } from '../../contexts/ActiveLobbyContext';
-import { MOCK_ACTIVE_LOBBY } from '../../services/mock/lobby';
+import { useGameMode } from '../../contexts/GameModeContext';
 
 import { styles } from './styles';
-import { ActivityMode, GameMode } from '../../Header/types';
+import { ActivityMode } from '../../Header/types';
 
 export default function Home() {
-  const [selectedCategory, setSelectedCategory] = useState<GameMode>('solo');
+  // gameMode vem do GameModeContext — é a mesma fonte que CreateLobby e
+  // JoinLobby já atualizavam (setGameMode('private')) antes desta
+  // correção. Sem isso, criar/entrar num lobby não fazia a Home refletir
+  // o modo Private nunca, mesmo com o activeLobby certo.
+  const { gameMode, setGameMode } = useGameMode();
   const [activityMode, setActivityMode] = useState<ActivityMode>('running');
   const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
   const { activeLobby, setActiveLobby } = useActiveLobby();
@@ -28,14 +32,14 @@ export default function Home() {
       <Header
         avatar="https://i.pravatar.cc/150?img=10"
         username="João"
-        selectedCategory={selectedCategory}
+        selectedCategory={gameMode}
         activityMode={activityMode}
-        onCategoryChange={setSelectedCategory}
+        onCategoryChange={setGameMode}
         onActivityChange={setActivityMode}
         onNotificationPress={() => navigation.navigate('Notifications')}
       />
 
-      {selectedCategory === 'private' && activeLobby && (
+      {gameMode === 'private' && activeLobby && (
         <TouchableOpacity
           style={styles.lobbyPill}
           onPress={() => setLobbyModalVisible(true)}
@@ -48,30 +52,13 @@ export default function Home() {
         </TouchableOpacity>
       )}
 
-      {selectedCategory === 'private' && activeLobby?.inGameChatEnabled && (
+      {gameMode === 'private' && activeLobby?.inGameChatEnabled && (
         <TouchableOpacity
           style={styles.chatButton}
           onPress={() => navigation.navigate('LobbyChat')}
           activeOpacity={0.85}
         >
           <Ionicons name="chatbubble-ellipses" size={20} color="#E9EBE6" />
-        </TouchableOpacity>
-      )}
-
-      {/* DEV: atalho só pra testar/visualizar a pill e o chat sem passar
-          pelo fluxo inteiro de criar lobby — remover antes de produção.
-          Já entra ativando o modo Private, senão a pill nasceria
-          escondida (a Home só mostra isso no modo Private de verdade). */}
-      {!activeLobby && (
-        <TouchableOpacity
-          style={styles.devSeedButton}
-          onPress={() => {
-            setActiveLobby(MOCK_ACTIVE_LOBBY);
-            setSelectedCategory('private');
-          }}
-        >
-          <Ionicons name="flask-outline" size={12} color="#061414" />
-          <Text style={styles.devSeedButtonText}>Carregar lobby de teste</Text>
         </TouchableOpacity>
       )}
 

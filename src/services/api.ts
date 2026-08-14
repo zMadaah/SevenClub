@@ -6,6 +6,7 @@ import { ActivityHistory } from '../types/history';
 import { FeedPost } from '../types/post';
 import { Comment } from '../types/comment';
 import { LeaderboardEntry, MyRankEntry } from '../types/leaderboard';
+import { Lobby } from '../types/lobby';
 import { formatRelativeTime } from '../utils/time';
 
 // EXPO_PUBLIC_* fica embutido no bundle em tempo de build — é assim que o
@@ -239,6 +240,15 @@ export interface LeaderboardResponse {
   myRank: MyRankEntry | null;
 }
 
+export interface LobbyInput {
+  name: string;
+  pictureUri?: string;
+  allowPreviousImports: boolean;
+  allowMemberInvitations: boolean;
+  inGameChatEnabled: boolean;
+  maxLobbySize: number | null;
+}
+
 export interface UserSearchResult {
   id: string;
   name: string;
@@ -366,6 +376,25 @@ export const authApi = {
     authFetch: AuthFetch,
     input: { displayName?: string; bio?: string; avatarUrl?: string; location?: string; countryCode?: string }
   ) => authFetch<any>('/auth/me', { method: 'PATCH', body: JSON.stringify(input) }),
+
+  // --- Lobbies (jogo privado) ----------------------------------------------
+
+  listMyLobbies: (authFetch: AuthFetch) => authFetch<Lobby[]>('/lobbies/mine'),
+
+  createLobby: (authFetch: AuthFetch, payload: LobbyInput) =>
+    authFetch<Lobby>('/lobbies', { method: 'POST', body: JSON.stringify(payload) }),
+
+  updateLobby: (authFetch: AuthFetch, lobbyId: string, payload: LobbyInput) =>
+    authFetch<Lobby>(`/lobbies/${lobbyId}`, { method: 'PATCH', body: JSON.stringify(payload) }),
+
+  deleteLobby: (authFetch: AuthFetch, lobbyId: string) =>
+    authFetch<void>(`/lobbies/${lobbyId}`, { method: 'DELETE' }),
+
+  joinLobby: (authFetch: AuthFetch, code: string) =>
+    authFetch<Lobby>('/lobbies/join', { method: 'POST', body: JSON.stringify({ code }) }),
+
+  leaveLobby: (authFetch: AuthFetch, lobbyId: string) =>
+    authFetch<void>(`/lobbies/${lobbyId}/leave`, { method: 'POST' }),
 
   // --- Upload (dev/homolog — ver aviso em uploads.routes.ts no backend) --
 

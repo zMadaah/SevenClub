@@ -38,8 +38,7 @@ export default function LobbyConfirmed() {
   }
 
   function handleGoToLobby() {
-    // TODO: navegar pra tela de detalhe do lobby quando ela existir
-    navigation.navigate('Private');
+    navigation.navigate('Main', { screen: 'Home' });
   }
 
 
