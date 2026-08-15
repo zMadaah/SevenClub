@@ -70,6 +70,7 @@ export const styles = StyleSheet.create({
     paddingBottom: 20,
     borderTopWidth: 1,
     borderTopColor: '#F0F0F0',
+    marginBottom:40,
   },
   input: {
     flex: 1,

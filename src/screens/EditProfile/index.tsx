@@ -1,11 +1,13 @@
-import React, { useState } from 'react';
-import { View, Text, TextInput, TouchableOpacity, Image, ScrollView, Alert, } from 'react-native';
+import React, { useEffect, useState } from 'react';
+import { View, Text, TextInput, TouchableOpacity, Image, ScrollView, Alert, ActivityIndicator } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useNavigation } from '@react-navigation/native';
+import * as ImagePicker from 'expo-image-picker';
+
 import GenderPickerModal from './components/GenderPickerModal';
+import { useAuth } from '../../contexts/AuthContext';
+import { authApi, ApiError, MyProfile } from '../../services/api';
 import { styles } from './styles';
-
-
 
 const COLOR_OPTIONS = [
     '#1D9E75', // teal
@@ -18,26 +20,87 @@ const COLOR_OPTIONS = [
     '#E24B4A', // red
 ];
 
+// Formata Date -> 'DD/MM/AAAA' pra exibir, e 'YYYY-MM-DD' pra API
+function isoToDisplay(iso: string | null): string {
+    if (!iso) return '';
+    const [y, m, d] = iso.split('-');
+    return `${d}/${m}/${y}`;
+}
+
+function displayToIso(display: string): string | undefined {
+    const digits = display.replace(/\D/g, '');
+    if (digits.length !== 8) return undefined;
+    const day = digits.slice(0, 2);
+    const month = digits.slice(2, 4);
+    const year = digits.slice(4);
+    return `${year}-${month}-${day}`;
+}
+
 export default function EditProfile() {
     const navigation = useNavigation();
+    const { authFetch } = useAuth();
 
-    const [hasCustomPhoto, setHasCustomPhoto] = useState(false);
-    const [firstName, setFirstName] = useState('João');
-    const [lastName, setLastName] = useState('Cruz');
-    const [displayName, setDisplayName] = useState('João Cruz');
+    const [loading, setLoading] = useState(true);
+    const [saving, setSaving] = useState(false);
+    const [uploadingPhoto, setUploadingPhoto] = useState(false);
+
+    const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
+    const [firstName, setFirstName] = useState('');
+    const [lastName, setLastName] = useState('');
+    const [displayName, setDisplayName] = useState('');
     const [dob, setDob] = useState('');
     const [gender, setGender] = useState<string | null>(null);
     const [selectedColor, setSelectedColor] = useState(COLOR_OPTIONS[1]);
     const [colorPickerOpen, setColorPickerOpen] = useState(false);
     const [genderModalVisible, setGenderModalVisible] = useState(false);
 
-    function handleChangePhoto() {
-        // TODO: trocar por expo-image-picker quando a dependência for instalada
-        Alert.alert('Em breve', 'Seleção de imagem ainda não está conectada.');
-    }
+    useEffect(() => {
+        authApi
+            .me(authFetch)
+            .then((profile: MyProfile) => {
+                setAvatarUrl(profile.avatarUrl);
+                setFirstName(profile.firstName ?? '');
+                setLastName(profile.lastName ?? '');
+                setDisplayName(profile.displayName ?? '');
+                setDob(isoToDisplay(profile.dateOfBirth));
+                setGender(profile.gender);
+                if (profile.profileColor) setSelectedColor(profile.profileColor);
+            })
+            .catch((err) => {
+                const message = err instanceof ApiError ? err.message : 'Não foi possível carregar seu perfil.';
+                Alert.alert('Ops', message);
+            })
+            .finally(() => setLoading(false));
+    }, [authFetch]);
 
-    function handleRemovePhoto() {
-        setHasCustomPhoto(false);
+    async function handleChangePhoto() {
+        const permission = await ImagePicker.requestMediaLibraryPermissionsAsync();
+        if (!permission.granted) {
+            Alert.alert('Permissão necessária', 'Precisamos de acesso à galeria para escolher uma foto.');
+            return;
+        }
+
+        const result = await ImagePicker.launchImageLibraryAsync({
+            mediaTypes: ['images'],
+            quality: 0.8,
+            allowsEditing: true,
+            aspect: [1, 1],
+        });
+
+        if (result.canceled || result.assets.length === 0) return;
+
+        const localUri = result.assets[0].uri;
+        setAvatarUrl(localUri);
+        setUploadingPhoto(true);
+        try {
+            const url = await authApi.uploadPhoto(authFetch, localUri);
+            setAvatarUrl(url);
+        } catch (err) {
+            const message = err instanceof ApiError ? err.message : 'Não foi possível enviar a foto.';
+            Alert.alert('Ops', message);
+        } finally {
+            setUploadingPhoto(false);
+        }
     }
 
     function handleChangeDob(text: string) {
@@ -51,9 +114,34 @@ export default function EditProfile() {
         setDob(formatted);
     }
 
-    function handleSave() {
-        // TODO: trocar por chamada real em services/api.ts assim que existir
-        navigation.goBack();
+    async function handleSave() {
+        if (saving || uploadingPhoto) return;
+        setSaving(true);
+        try {
+            await authApi.updateMyProfile(authFetch, {
+                firstName: firstName.trim() || undefined,
+                lastName: lastName.trim() || undefined,
+                displayName: displayName.trim() || undefined,
+                dateOfBirth: displayToIso(dob),
+                gender: gender ?? undefined,
+                profileColor: selectedColor,
+                avatarUrl: avatarUrl ?? undefined,
+            });
+            navigation.goBack();
+        } catch (err) {
+            const message = err instanceof ApiError ? err.message : 'Não foi possível salvar seu perfil.';
+            Alert.alert('Ops', message);
+        } finally {
+            setSaving(false);
+        }
+    }
+
+    if (loading) {
+        return (
+            <View style={[styles.container, { alignItems: 'center', justifyContent: 'center' }]}>
+                <ActivityIndicator color="#111" />
+            </View>
+        );
     }
 
     return (
@@ -70,35 +158,32 @@ export default function EditProfile() {
 
             <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
                 <View style={styles.photoRow}>
-                    <Image
-                        source={{ uri: 'https://i.pravatar.cc/200?img=10' }}
-                        style={styles.avatar}
-                    />
-
-                    <View style={styles.photoActions}>
-                        <TouchableOpacity style={styles.photoAction} onPress={handleChangePhoto}>
-                            <Ionicons name="image-outline" size={18} color="#111" />
-                            <Text style={styles.photoActionText}>Alterar foto</Text>
-                        </TouchableOpacity>
-
-                        <TouchableOpacity
-                            style={styles.photoAction}
-                            onPress={handleRemovePhoto}
-                            disabled={!hasCustomPhoto}
-                        >
-                            <Ionicons
-                                name="trash-outline"
-                                size={18}
-                                color={hasCustomPhoto ? '#111' : '#ccc'}
-                            />
-                            <Text
+                    <View>
+                        <Image
+                            source={{ uri: avatarUrl || 'https://i.pravatar.cc/200?img=10' }}
+                            style={styles.avatar}
+                        />
+                        {uploadingPhoto && (
+                            <View
                                 style={[
-                                    styles.photoActionText,
-                                    !hasCustomPhoto && styles.photoActionTextDisabled,
+                                    styles.avatar,
+                                    {
+                                        position: 'absolute',
+                                        alignItems: 'center',
+                                        justifyContent: 'center',
+                                        backgroundColor: 'rgba(0,0,0,0.4)',
+                                    },
                                 ]}
                             >
-                                Remover foto
-                            </Text>
+                                <ActivityIndicator color="#fff" />
+                            </View>
+                        )}
+                    </View>
+
+                    <View style={styles.photoActions}>
+                        <TouchableOpacity style={styles.photoAction} onPress={handleChangePhoto} disabled={uploadingPhoto}>
+                            <Ionicons name="image-outline" size={18} color="#111" />
+                            <Text style={styles.photoActionText}>Alterar foto</Text>
                         </TouchableOpacity>
                     </View>
                 </View>
@@ -187,16 +272,15 @@ export default function EditProfile() {
                 )}
 
                 <View style={styles.divider} />
-
-                {/* <Text style={styles.sectionTitle}>Skin do perfil</Text>
-        <View style={styles.skinPlaceholder}>
-          <Ionicons name="add" size={20} color="#999" />
-        </View> */}
             </ScrollView>
 
             <View style={styles.footer}>
-                <TouchableOpacity style={styles.saveButton} onPress={handleSave}>
-                    <Text style={styles.saveText}>SALVAR</Text>
+                <TouchableOpacity
+                    style={[styles.saveButton, (saving || uploadingPhoto) && { opacity: 0.6 }]}
+                    onPress={handleSave}
+                    disabled={saving || uploadingPhoto}
+                >
+                    <Text style={styles.saveText}>{saving ? 'SALVANDO...' : 'SALVAR'}</Text>
                 </TouchableOpacity>
             </View>
             <GenderPickerModal

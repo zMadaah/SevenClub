@@ -1,19 +1,42 @@
-import React, { useState } from 'react';
-import { View, Text, TouchableOpacity, FlatList } from 'react-native';
+import React, { useCallback, useEffect, useState } from 'react';
+import { View, Text, TouchableOpacity, FlatList, ActivityIndicator, Alert } from 'react-native';
 import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
 import { useNavigation } from '@react-navigation/native';
 
 import RivalCard from '../../components/RivalCard';
-import { MOCK_RIVALS, YOUR_COLOR } from '../../services/mock/rivals';
+import { useAuth } from '../../contexts/AuthContext';
+import { authApi, ApiError, RivalEntryApi } from '../../services/api';
 import { ActivityType } from '../../types/lobby';
 import { colors } from '../../theme/colors';
 import { styles } from './styles';
 
+const YOUR_COLOR = '#BCFF00';
+
 export default function Rivals() {
   const navigation = useNavigation();
+  const { authFetch } = useAuth();
   const [activityType, setActivityType] = useState<ActivityType>('run');
+  const [rivals, setRivals] = useState<RivalEntryApi[]>([]);
+  const [loading, setLoading] = useState(true);
 
-  const rivals = MOCK_RIVALS[activityType];
+  const loadRivals = useCallback(
+    (type: ActivityType) => {
+      setLoading(true);
+      authApi
+        .getRivals(authFetch, type)
+        .then(setRivals)
+        .catch((err) => {
+          const message = err instanceof ApiError ? err.message : 'Não foi possível carregar os rivais.';
+          Alert.alert('Ops', message);
+        })
+        .finally(() => setLoading(false));
+    },
+    [authFetch]
+  );
+
+  useEffect(() => {
+    loadRivals(activityType);
+  }, [activityType, loadRivals]);
 
   function toggleActivityType() {
     setActivityType((prev) => (prev === 'run' ? 'ride' : 'run'));
@@ -41,7 +64,11 @@ export default function Rivals() {
         </TouchableOpacity>
       </View>
 
-      {rivals.length === 0 ? (
+      {loading ? (
+        <View style={styles.emptyState}>
+          <ActivityIndicator color={colors.textPrimary} />
+        </View>
+      ) : rivals.length === 0 ? (
         <View style={styles.emptyState}>
           <MaterialCommunityIcons name="sword-cross" size={28} color={colors.textMuted} />
           <Text style={styles.emptyTitle}>Ainda não é rival de ninguém</Text>

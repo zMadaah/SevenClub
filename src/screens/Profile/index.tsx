@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 
 import { View, Text, Image, TouchableOpacity, ScrollView, Alert } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
@@ -6,8 +6,8 @@ import { useNavigation } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { RootStackParamList } from '../../navigation/types';
 
-import { useAuth } from '../../contexts/AuthContext'
-  ;
+import { useAuth } from '../../contexts/AuthContext';
+import { authApi, ApiError, MyProfile } from '../../services/api';
 import UnitPreferenceModal from './components/UnitPreferenceModal';
 import AnonymousModeModal from './components/AnonymousModeModal';
 import { UnitSystem } from '../../types/preference';
@@ -24,7 +24,18 @@ export default function Profile() {
   const [unitModalVisible, setUnitModalVisible] = useState(false);
   const [anonymousModalVisible, setAnonymousModalVisible] = useState(false);
   const [supportExpanded, setSupportExpanded] = useState(false);
-  const { signOut } = useAuth();
+  const { authFetch, signOut } = useAuth();
+  const [profile, setProfile] = useState<MyProfile | null>(null);
+
+  useEffect(() => {
+    authApi
+      .me(authFetch)
+      .then(setProfile)
+      .catch(() => {
+        // tela funciona com o nome/avatar genérico se isso falhar — não
+        // vale travar a tela de configurações com um alerta por causa disso
+      });
+  }, [authFetch]);
 
   const unitLabel = unitSystem === 'metric' ? 'Quilômetros e metros' : 'Milhas e pés';
 
@@ -43,13 +54,24 @@ export default function Profile() {
   }
 
   function handleRemoveTerraData() {
-    // TODO: conectar em services/api.ts — ação destrutiva, deve pedir confirmação real
     Alert.alert(
       'Remover dados',
       'Isso vai apagar permanentemente seus dados de território e atividade. Deseja continuar?',
       [
         { text: 'Cancelar', style: 'cancel' },
-        { text: 'Remover', style: 'destructive', onPress: () => { } },
+        {
+          text: 'Remover',
+          style: 'destructive',
+          onPress: async () => {
+            try {
+              await authApi.deleteMyData(authFetch);
+              Alert.alert('Pronto', 'Seus dados de atividade e território foram removidos.');
+            } catch (err) {
+              const message = err instanceof ApiError ? err.message : 'Não foi possível remover seus dados.';
+              Alert.alert('Ops', message);
+            }
+          },
+        },
       ]
     );
   }
@@ -88,11 +110,11 @@ export default function Profile() {
       {/* Perfil */}
       <View style={styles.header}>
         <Image
-          source={{ uri: 'https://i.pravatar.cc/200?img=10' }}
+          source={{ uri: profile?.avatarUrl || 'https://i.pravatar.cc/200?img=10' }}
           style={styles.avatar}
         />
 
-        <Text style={styles.name}>João Cruz</Text>
+        <Text style={styles.name}>{profile?.displayName ?? '...'}</Text>
 
         <TouchableOpacity style={styles.profileButton} onPress={() => navigation.navigate('MyStats')}>
           <Text style={styles.profileButtonText}>Ver perfil</Text>
@@ -100,7 +122,11 @@ export default function Profile() {
       </View>
 
       {/* Banner de indicação */}
-      <TouchableOpacity style={styles.referralCard} activeOpacity={0.85}>
+      <TouchableOpacity
+        style={styles.referralCard}
+        activeOpacity={0.85}
+        onPress={() => navigation.navigate('ReferralCode')}
+      >
         <View style={styles.referralIcon}>
           <Ionicons name="people-outline" size={22} color="#fff" />
         </View>

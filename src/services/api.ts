@@ -240,6 +240,42 @@ export interface LeaderboardResponse {
   myRank: MyRankEntry | null;
 }
 
+export interface ProgressSummary {
+  level: number;
+  exp: number;
+  expTarget: number;
+  territoryM2: number;
+  territoryBestM2: number;
+  rivalsCount: number;
+  rivalsBeating: number;
+  season: { id: string; number: number; name: string; startsAt: string; endsAt: string } | null;
+}
+
+export interface BadgeStatus {
+  id: string;
+  unlocked: boolean;
+  unlockedAt: string | null;
+}
+
+export interface ChallengeStatus {
+  id: string;
+  xp: number;
+  completed: boolean;
+  claimed: boolean;
+}
+
+export interface RivalEntryApi {
+  id: string;
+  name: string;
+  avatarUrl: string;
+  color: string;
+  yourTerritoryKm2: number;
+  yourSteals: number;
+  rivalTerritoryKm2: number;
+  rivalSteals: number;
+  activityType: 'run' | 'ride';
+}
+
 export interface LobbyInput {
   name: string;
   pictureUri?: string;
@@ -275,8 +311,33 @@ function normalizeSavedRoute(raw: RawSavedRoute): SavedRoute {
   return { ...raw, createdAt: new Date(raw.createdAt).getTime() };
 }
 
+export interface MyProfile {
+  id: string;
+  email: string;
+  displayName: string;
+  firstName: string | null;
+  lastName: string | null;
+  avatarUrl: string | null;
+  bio: string | null;
+  dateOfBirth: string | null;
+  gender: string | null;
+  profileColor: string | null;
+  location: string | null;
+  countryCode: string | null;
+  phone: string | null;
+  profileVisibility: 'public' | 'followers';
+  mapVisibility: 'everyone' | 'crew' | 'nobody';
+  referralCode: string | null;
+  referredBy: string | null;
+  featuredBadgeId: string | null;
+  totalDistanceKm: number;
+  totalTerritoryKm2: number;
+  rivalCount: number;
+  createdAt: string;
+}
+
 export const authApi = {
-  me: (authFetch: AuthFetch) => authFetch<any>('/auth/me'),
+  me: (authFetch: AuthFetch) => authFetch<MyProfile>('/auth/me'),
 
   createActivity: (
     authFetch: AuthFetch,
@@ -374,8 +435,72 @@ export const authApi = {
 
   updateMyProfile: (
     authFetch: AuthFetch,
-    input: { displayName?: string; bio?: string; avatarUrl?: string; location?: string; countryCode?: string }
+    input: {
+      displayName?: string;
+      firstName?: string;
+      lastName?: string;
+      bio?: string;
+      avatarUrl?: string;
+      location?: string;
+      countryCode?: string;
+      dateOfBirth?: string;
+      gender?: string;
+      profileColor?: string;
+      profileVisibility?: 'public' | 'followers';
+      mapVisibility?: 'everyone' | 'crew' | 'nobody';
+      featuredBadgeId?: string | null;
+    }
   ) => authFetch<any>('/auth/me', { method: 'PATCH', body: JSON.stringify(input) }),
+
+  deleteMyData: (authFetch: AuthFetch) => authFetch<void>('/auth/me/data', { method: 'DELETE' }),
+
+  // --- Bloqueio de usuários -------------------------------------------------
+
+  listBlockedUsers: (authFetch: AuthFetch) =>
+    authFetch<{ id: string; name: string; avatarUrl: string }[]>('/blocked-users'),
+
+  blockUser: (authFetch: AuthFetch, userId: string) =>
+    authFetch<void>(`/blocked-users/${userId}`, { method: 'POST' }),
+
+  unblockUser: (authFetch: AuthFetch, userId: string) =>
+    authFetch<void>(`/blocked-users/${userId}`, { method: 'DELETE' }),
+
+  // --- Indicação -------------------------------------------------------------
+
+  getMyReferralInfo: (authFetch: AuthFetch) =>
+    authFetch<{ referralCode: string | null; referredCount: number }>('/referrals/me'),
+
+  redeemReferralCode: (authFetch: AuthFetch, code: string) =>
+    authFetch<void>('/referrals/redeem', { method: 'POST', body: JSON.stringify({ code }) }),
+
+  // --- Suporte -----------------------------------------------------------
+
+  listSupportMessages: (authFetch: AuthFetch) =>
+    authFetch<
+      { id: string; ticketId: string; sender: 'user' | 'admin'; text: string; createdAt: string }[]
+    >('/support/messages'),
+
+  sendSupportMessage: (authFetch: AuthFetch, text: string) =>
+    authFetch<{ id: string; ticketId: string; sender: 'user' | 'admin'; text: string; createdAt: string }>(
+      '/support/messages',
+      { method: 'POST', body: JSON.stringify({ text }) }
+    ),
+
+  // --- Progresso (nível/XP, insígnias, desafios, rivais) --------------------
+
+  getProgressSummary: (authFetch: AuthFetch, activityType: 'run' | 'ride') =>
+    authFetch<ProgressSummary>(`/progress/summary?activityType=${activityType}`),
+
+  getBadgeStatuses: (authFetch: AuthFetch) => authFetch<BadgeStatus[]>('/badges/status'),
+
+  getChallengeStatuses: (authFetch: AuthFetch) =>
+    authFetch<ChallengeStatus[]>('/challenges/status'),
+
+  claimChallenge: (authFetch: AuthFetch, challengeId: string) =>
+    authFetch<void>(`/challenges/${challengeId}/claim`, { method: 'POST' }),
+
+  getRivals: (authFetch: AuthFetch, activityType: 'run' | 'ride') =>
+    authFetch<RivalEntryApi[]>(`/rivals?activityType=${activityType}`),
 
   // --- Lobbies (jogo privado) ----------------------------------------------
 
