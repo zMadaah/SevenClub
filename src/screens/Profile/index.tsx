@@ -1,8 +1,8 @@
-import React, { useEffect, useState } from 'react';
+import React, { useCallback, useState } from 'react';
 
 import { View, Text, Image, TouchableOpacity, ScrollView, Alert } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { useNavigation } from '@react-navigation/native';
+import { useNavigation, useFocusEffect } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { RootStackParamList } from '../../navigation/types';
 
@@ -27,15 +27,21 @@ export default function Profile() {
   const { authFetch, signOut } = useAuth();
   const [profile, setProfile] = useState<MyProfile | null>(null);
 
-  useEffect(() => {
-    authApi
-      .me(authFetch)
-      .then(setProfile)
-      .catch(() => {
-        // tela funciona com o nome/avatar genérico se isso falhar — não
-        // vale travar a tela de configurações com um alerta por causa disso
-      });
-  }, [authFetch]);
+  // useFocusEffect (não useEffect) de propósito: o React Navigation não
+  // desmonta essa tela ao voltar do EditProfile, só esconde e mostra de
+  // novo — um useEffect comum não rodaria de novo, e o cabeçalho ficaria
+  // com a foto/nome antigos até recarregar o app inteiro.
+  useFocusEffect(
+    useCallback(() => {
+      authApi
+        .me(authFetch)
+        .then(setProfile)
+        .catch(() => {
+          // tela funciona com o nome/avatar genérico se isso falhar — não
+          // vale travar a tela de configurações com um alerta por causa disso
+        });
+    }, [authFetch])
+  );
 
   const unitLabel = unitSystem === 'metric' ? 'Quilômetros e metros' : 'Milhas e pés';
 

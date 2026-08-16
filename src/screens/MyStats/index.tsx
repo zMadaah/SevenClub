@@ -8,7 +8,7 @@ import { RootStackParamList } from '../../navigation/types';
 import { ActivityType } from '../../types/lobby';
 import { ActivityStats } from '../../types/stats';
 import { useAuth } from '../../contexts/AuthContext';
-import { authApi, ApiError } from '../../services/api';
+import { authApi, ApiError, MyProfile } from '../../services/api';
 import { colors } from '../../theme/colors';
 import { styles } from './styles';
 
@@ -26,6 +26,27 @@ export default function MyStats() {
   const [stats, setStats] = useState<ActivityStats>(EMPTY_STATS);
   const [activitiesCount, setActivitiesCount] = useState(0);
   const [loadingStats, setLoadingStats] = useState(true);
+  const [profile, setProfile] = useState<MyProfile | null>(null);
+  const [followingCount, setFollowingCount] = useState(0);
+  const [followersCount, setFollowersCount] = useState(0);
+
+  // Nome/foto e contagem de seguindo/seguidores não dependem do toggle
+  // corrida/pedal, então busca uma vez só, junto com o total de atividades.
+  useEffect(() => {
+    authApi.me(authFetch).then(setProfile).catch(() => {
+      // tela funciona com nome/avatar genérico se isso falhar
+    });
+
+    authApi
+      .getFollowCounts(authFetch)
+      .then((counts) => {
+        setFollowingCount(counts.followingCount);
+        setFollowersCount(counts.followersCount);
+      })
+      .catch(() => {
+        // fica 0/0 se isso falhar — não é grave o bastante pra travar a tela
+      });
+  }, [authFetch]);
 
   // Total de atividades não depende do toggle corrida/pedal (fica acima
   // dele na tela), então busca uma vez só, à parte.
@@ -68,20 +89,20 @@ export default function MyStats() {
         </TouchableOpacity>
 
         <Image
-          source={{ uri: 'https://i.pravatar.cc/200?img=10' }}
+          source={{ uri: profile?.avatarUrl || 'https://i.pravatar.cc/200?img=10' }}
           style={styles.avatar}
         />
 
-        <Text style={styles.name}>João Cruz</Text>
+        <Text style={styles.name}>{profile?.displayName ?? '...'}</Text>
 
         <View style={styles.summaryRow}>
           <View style={styles.summaryBlock}>
             <Text style={styles.summaryLabel}>Seguindo</Text>
-            <Text style={styles.summaryValue}>0</Text>
+            <Text style={styles.summaryValue}>{followingCount}</Text>
           </View>
           <View style={styles.summaryBlock}>
             <Text style={styles.summaryLabel}>Seguidores</Text>
-            <Text style={styles.summaryValue}>0</Text>
+            <Text style={styles.summaryValue}>{followersCount}</Text>
           </View>
           <View style={styles.summaryBlock}>
             <Text style={styles.summaryLabel}>Atividades</Text>

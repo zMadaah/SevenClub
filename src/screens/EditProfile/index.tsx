@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { View, Text, TextInput, TouchableOpacity, Image, ScrollView, Alert, ActivityIndicator } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useNavigation } from '@react-navigation/native';
@@ -54,14 +54,32 @@ export default function EditProfile() {
     const [colorPickerOpen, setColorPickerOpen] = useState(false);
     const [genderModalVisible, setGenderModalVisible] = useState(false);
 
+    // "Nome de exibição" é o que aparece no resto do app (cabeçalho do
+    // Profile, posts, leaderboard) — não Nome/Sobrenome. Pra evitar a
+    // pessoa editar Nome/Sobrenome e achar que "não salvou" porque o
+    // cabeçalho não mudou, mantemos os dois sincronizados até a pessoa
+    // editar "Nome de exibição" na mão — a partir daí, para de seguir
+    // automático (ela assumiu o controle).
+    const displayNameManuallyEdited = useRef(false);
+
     useEffect(() => {
         authApi
             .me(authFetch)
             .then((profile: MyProfile) => {
                 setAvatarUrl(profile.avatarUrl);
-                setFirstName(profile.firstName ?? '');
-                setLastName(profile.lastName ?? '');
-                setDisplayName(profile.displayName ?? '');
+                const loadedFirstName = profile.firstName ?? '';
+                const loadedLastName = profile.lastName ?? '';
+                const loadedDisplayName = profile.displayName ?? '';
+                setFirstName(loadedFirstName);
+                setLastName(loadedLastName);
+                setDisplayName(loadedDisplayName);
+
+                // Se o nome de exibição já veio diferente do que Nome+Sobrenome
+                // comporia, é porque já foi customizado antes — não mexe nele
+                // automaticamente. Só sincroniza quando ainda está "no padrão".
+                const composed = `${loadedFirstName} ${loadedLastName}`.trim();
+                displayNameManuallyEdited.current = loadedDisplayName !== '' && loadedDisplayName !== composed;
+
                 setDob(isoToDisplay(profile.dateOfBirth));
                 setGender(profile.gender);
                 if (profile.profileColor) setSelectedColor(profile.profileColor);
@@ -72,6 +90,15 @@ export default function EditProfile() {
             })
             .finally(() => setLoading(false));
     }, [authFetch]);
+
+    // Mantém "Nome de exibição" seguindo Nome+Sobrenome automaticamente —
+    // até a pessoa editar esse campo na mão (aí displayNameManuallyEdited
+    // vira true e este efeito para de mexer nele).
+    useEffect(() => {
+        if (!displayNameManuallyEdited.current) {
+            setDisplayName(`${firstName} ${lastName}`.trim());
+        }
+    }, [firstName, lastName]);
 
     async function handleChangePhoto() {
         const permission = await ImagePicker.requestMediaLibraryPermissionsAsync();
@@ -213,8 +240,12 @@ export default function EditProfile() {
                     placeholder="Nome de exibição"
                     placeholderTextColor="#999"
                     value={displayName}
-                    onChangeText={setDisplayName}
+                    onChangeText={(text) => {
+                        displayNameManuallyEdited.current = true;
+                        setDisplayName(text);
+                    }}
                 />
+                
 
                 <TextInput
                     style={styles.input}

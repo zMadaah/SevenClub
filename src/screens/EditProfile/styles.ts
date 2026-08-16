@@ -77,6 +77,12 @@ export const styles = StyleSheet.create({
     color: '#111',
     marginBottom: 14,
   },
+  helperText: {
+    fontSize: 12,
+    color: '#888',
+    marginTop: -8,
+    marginBottom: 14,
+  },
   selectInput: {
     borderWidth: 1.5,
     borderColor: '#111',

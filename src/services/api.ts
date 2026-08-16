@@ -40,8 +40,14 @@ export async function request<T = any>(
   token?: string
 ): Promise<T> {
   const isFormData = typeof FormData !== 'undefined' && options.body instanceof FormData;
+  // Só manda Content-Type: application/json quando existe corpo de
+  // verdade. Sem essa checagem, toda chamada sem body (seguir, curtir,
+  // bloquear, sair de lobby, resgatar desafio...) mandava o cabeçalho
+  // dizendo "isso é JSON" com corpo vazio — o Fastify recusa isso com
+  // FST_ERR_CTP_EMPTY_JSON_BODY antes até de chegar na rota.
+  const hasBody = options.body !== undefined && options.body !== null;
   const headers: Record<string, string> = {
-    ...(isFormData ? {} : { 'Content-Type': 'application/json' }),
+    ...(hasBody && !isFormData ? { 'Content-Type': 'application/json' } : {}),
     ...(options.headers as Record<string, string> | undefined),
   };
   if (token) headers.Authorization = `Bearer ${token}`;
@@ -336,8 +342,67 @@ export interface MyProfile {
   createdAt: string;
 }
 
+// O backend devolve as colunas cruas do Postgres — snake_case
+// (display_name, avatar_url...). Sem esse normalizador, `authFetch<MyProfile>`
+// é só um cast de TypeScript (não converte nada em tempo de execução), e
+// todo `profile.displayName`/`profile.avatarUrl` no app fica sempre
+// `undefined` mesmo com a API respondendo 200 certinho — foi exatamente
+// esse o bug: Profile mostrando "..." e EditProfile carregando os campos
+// em branco, não por falha de rede, por formato.
+interface RawMyProfile {
+  id: string;
+  email: string;
+  display_name: string;
+  first_name: string | null;
+  last_name: string | null;
+  avatar_url: string | null;
+  bio: string | null;
+  date_of_birth: string | null;
+  gender: string | null;
+  profile_color: string | null;
+  location: string | null;
+  country_code: string | null;
+  phone: string | null;
+  profile_visibility: 'public' | 'followers';
+  map_visibility: 'everyone' | 'crew' | 'nobody';
+  referral_code: string | null;
+  referred_by: string | null;
+  featured_badge_id: string | null;
+  total_distance_km: number | string;
+  total_territory_km2: number | string;
+  rival_count: number;
+  created_at: string;
+}
+
+function normalizeProfile(raw: RawMyProfile): MyProfile {
+  return {
+    id: raw.id,
+    email: raw.email,
+    displayName: raw.display_name,
+    firstName: raw.first_name,
+    lastName: raw.last_name,
+    avatarUrl: raw.avatar_url,
+    bio: raw.bio,
+    dateOfBirth: raw.date_of_birth,
+    gender: raw.gender,
+    profileColor: raw.profile_color,
+    location: raw.location,
+    countryCode: raw.country_code,
+    phone: raw.phone,
+    profileVisibility: raw.profile_visibility,
+    mapVisibility: raw.map_visibility,
+    referralCode: raw.referral_code,
+    referredBy: raw.referred_by,
+    featuredBadgeId: raw.featured_badge_id,
+    totalDistanceKm: Number(raw.total_distance_km),
+    totalTerritoryKm2: Number(raw.total_territory_km2),
+    rivalCount: raw.rival_count,
+    createdAt: raw.created_at,
+  };
+}
+
 export const authApi = {
-  me: (authFetch: AuthFetch) => authFetch<MyProfile>('/auth/me'),
+  me: (authFetch: AuthFetch) => authFetch<RawMyProfile>('/auth/me').then(normalizeProfile),
 
   createActivity: (
     authFetch: AuthFetch,
@@ -423,6 +488,9 @@ export const authApi = {
   searchUsers: (authFetch: AuthFetch, term: string) =>
     authFetch<UserSearchResult[]>(`/users/search?q=${encodeURIComponent(term)}`),
 
+  getFollowCounts: (authFetch: AuthFetch) =>
+    authFetch<{ followingCount: number; followersCount: number }>('/follows/counts'),
+
   // --- Ranking -------------------------------------------------------------
 
   getLeaderboard: (
@@ -450,7 +518,7 @@ export const authApi = {
       mapVisibility?: 'everyone' | 'crew' | 'nobody';
       featuredBadgeId?: string | null;
     }
-  ) => authFetch<any>('/auth/me', { method: 'PATCH', body: JSON.stringify(input) }),
+  ) => authFetch<RawMyProfile>('/auth/me', { method: 'PATCH', body: JSON.stringify(input) }).then(normalizeProfile),
 
   deleteMyData: (authFetch: AuthFetch) => authFetch<void>('/auth/me/data', { method: 'DELETE' }),
 
@@ -477,11 +545,11 @@ export const authApi = {
 
   listSupportMessages: (authFetch: AuthFetch) =>
     authFetch<
-      { id: string; ticketId: string; sender: 'user' | 'admin'; text: string; createdAt: string }[]
+      { id: string; ticketId: string; sender: 'user' | 'staff'; text: string; createdAt: string }[]
     >('/support/messages'),
 
   sendSupportMessage: (authFetch: AuthFetch, text: string) =>
-    authFetch<{ id: string; ticketId: string; sender: 'user' | 'admin'; text: string; createdAt: string }>(
+    authFetch<{ id: string; ticketId: string; sender: 'user' | 'staff'; text: string; createdAt: string }>(
       '/support/messages',
       { method: 'POST', body: JSON.stringify({ text }) }
     ),
