@@ -7,6 +7,7 @@ import { FeedPost } from '../types/post';
 import { Comment } from '../types/comment';
 import { LeaderboardEntry, MyRankEntry } from '../types/leaderboard';
 import { Lobby } from '../types/lobby';
+import { NotificationPreferences } from '../types/notificationPreference';
 import { formatRelativeTime } from '../utils/time';
 
 // EXPO_PUBLIC_* fica embutido no bundle em tempo de build — é assim que o
@@ -336,6 +337,7 @@ export interface MyProfile {
   referralCode: string | null;
   referredBy: string | null;
   featuredBadgeId: string | null;
+  anonymousMode: boolean;
   totalDistanceKm: number;
   totalTerritoryKm2: number;
   rivalCount: number;
@@ -368,6 +370,7 @@ interface RawMyProfile {
   referral_code: string | null;
   referred_by: string | null;
   featured_badge_id: string | null;
+  anonymous_mode: boolean;
   total_distance_km: number | string;
   total_territory_km2: number | string;
   rival_count: number;
@@ -394,6 +397,7 @@ function normalizeProfile(raw: RawMyProfile): MyProfile {
     referralCode: raw.referral_code,
     referredBy: raw.referred_by,
     featuredBadgeId: raw.featured_badge_id,
+    anonymousMode: raw.anonymous_mode,
     totalDistanceKm: Number(raw.total_distance_km),
     totalTerritoryKm2: Number(raw.total_territory_km2),
     rivalCount: raw.rival_count,
@@ -491,6 +495,21 @@ export const authApi = {
   getFollowCounts: (authFetch: AuthFetch) =>
     authFetch<{ followingCount: number; followersCount: number }>('/follows/counts'),
 
+  // --- Preferências de notificação -------------------------------------
+  // Isto só guarda o que a pessoa quer receber — o envio de verdade
+  // (push notification quando alguém curte, comenta, rouba território
+  // etc.) precisa de infraestrutura própria (registro de token Expo +
+  // gatilho por evento) que ainda não existe.
+
+  getNotificationPreferences: (authFetch: AuthFetch) =>
+    authFetch<NotificationPreferences>('/notifications/preferences'),
+
+  updateNotificationPreferences: (authFetch: AuthFetch, patch: Partial<NotificationPreferences>) =>
+    authFetch<NotificationPreferences>('/notifications/preferences', {
+      method: 'PATCH',
+      body: JSON.stringify(patch),
+    }),
+
   // --- Ranking -------------------------------------------------------------
 
   getLeaderboard: (
@@ -517,6 +536,7 @@ export const authApi = {
       profileVisibility?: 'public' | 'followers';
       mapVisibility?: 'everyone' | 'crew' | 'nobody';
       featuredBadgeId?: string | null;
+      anonymousMode?: boolean;
     }
   ) => authFetch<RawMyProfile>('/auth/me', { method: 'PATCH', body: JSON.stringify(input) }).then(normalizeProfile),
 

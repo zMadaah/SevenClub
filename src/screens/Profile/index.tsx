@@ -20,7 +20,6 @@ export default function Profile() {
   const [unitSystem, setUnitSystem] = useState<UnitSystem>('metric');
   const [privacyExpanded, setPrivacyExpanded] = useState(false);
   const [plansExpanded, setPlansExpanded] = useState(false);
-  const [anonymousMode, setAnonymousMode] = useState(false);
   const [unitModalVisible, setUnitModalVisible] = useState(false);
   const [anonymousModalVisible, setAnonymousModalVisible] = useState(false);
   const [supportExpanded, setSupportExpanded] = useState(false);
@@ -29,8 +28,7 @@ export default function Profile() {
 
   // useFocusEffect (não useEffect) de propósito: o React Navigation não
   // desmonta essa tela ao voltar do EditProfile, só esconde e mostra de
-  // novo — um useEffect comum não rodaria de novo, e o cabeçalho ficaria
-  // com a foto/nome antigos até recarregar o app inteiro.
+  // novo — um useEffect comum não rodaria de novo.
   useFocusEffect(
     useCallback(() => {
       authApi
@@ -43,19 +41,33 @@ export default function Profile() {
     }, [authFetch])
   );
 
+  const anonymousMode = profile?.anonymousMode ?? false;
   const unitLabel = unitSystem === 'metric' ? 'Quilômetros e metros' : 'Milhas e pés';
+
+  async function persistAnonymousMode(value: boolean) {
+    const previous = profile;
+    setProfile((prev) => (prev ? { ...prev, anonymousMode: value } : prev));
+    try {
+      const updated = await authApi.updateMyProfile(authFetch, { anonymousMode: value });
+      setProfile(updated);
+    } catch (err) {
+      setProfile(previous);
+      const message = err instanceof ApiError ? err.message : 'Não foi possível atualizar.';
+      Alert.alert('Ops', message);
+    }
+  }
 
   function handleToggleAnonymous() {
     if (anonymousMode) {
       // desligar não precisa de confirmação, só ligar exige entender o aviso primeiro
-      setAnonymousMode(false);
+      persistAnonymousMode(false);
       return;
     }
     setAnonymousModalVisible(true);
   }
 
   function handleConfirmAnonymous() {
-    setAnonymousMode(true);
+    persistAnonymousMode(true);
     setAnonymousModalVisible(false);
   }
 

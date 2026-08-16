@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { View, Text, TouchableOpacity, ScrollView, Linking } from 'react-native';
+import React, { useEffect, useState } from 'react';
+import { View, Text, TouchableOpacity, ScrollView, Linking, ActivityIndicator, Alert } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useNavigation } from '@react-navigation/native';
 
@@ -7,16 +7,38 @@ import SettingToggleRow from './components/SettingToggleRow';
 import {
   DEFAULT_NOTIFICATION_PREFERENCES,
   NotificationPreferences,
-} from '../../types/notificationPreference';  
+} from '../../types/notificationPreference';
+import { useAuth } from '../../contexts/AuthContext';
+import { authApi, ApiError } from '../../services/api';
 import { colors } from '../../theme/colors';
 import { styles } from './styles';
 
 export default function ManageNotifications() {
   const navigation = useNavigation();
+  const { authFetch } = useAuth();
   const [prefs, setPrefs] = useState<NotificationPreferences>(DEFAULT_NOTIFICATION_PREFERENCES);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    authApi
+      .getNotificationPreferences(authFetch)
+      .then(setPrefs)
+      .catch((err) => {
+        const message = err instanceof ApiError ? err.message : 'Não foi possível carregar suas preferências.';
+        Alert.alert('Ops', message);
+      })
+      .finally(() => setLoading(false));
+  }, [authFetch]);
 
   function update<K extends keyof NotificationPreferences>(key: K, value: NotificationPreferences[K]) {
+    const previous = prefs;
+    // atualização otimista — reage na hora, desfaz se a chamada falhar
     setPrefs((prev) => ({ ...prev, [key]: value }));
+    authApi.updateNotificationPreferences(authFetch, { [key]: value }).catch((err) => {
+      setPrefs(previous);
+      const message = err instanceof ApiError ? err.message : 'Não foi possível salvar.';
+      Alert.alert('Ops', message);
+    });
   }
 
   return (
@@ -29,6 +51,12 @@ export default function ManageNotifications() {
       </View>
 
       <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
+        {loading ? (
+          <View style={{ paddingVertical: 40, alignItems: 'center' }}>
+            <ActivityIndicator color={colors.textPrimary} />
+          </View>
+        ) : (
+          <>
         <TouchableOpacity
           style={styles.disabledBanner}
           activeOpacity={0.85}
@@ -146,6 +174,8 @@ export default function ManageNotifications() {
           value={prefs.captureThreshold5To20}
           onValueChange={(v) => update('captureThreshold5To20', v)}
         />
+          </>
+        )}
       </ScrollView>
     </View>
   );
