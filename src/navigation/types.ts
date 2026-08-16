@@ -10,7 +10,7 @@ export type RootStackParamList = {
     Main: NavigatorScreenParams<BottomTabsParamList> | undefined;
     Profile: undefined;
     Private: undefined;
-    ActivityStart: undefined;
+    ActivityStart: { presetRouteId?: string } | undefined;
     RoutePlan: undefined;
     JoinLobby: undefined;
     CreateLobby: { lobbyId?: string } | undefined;

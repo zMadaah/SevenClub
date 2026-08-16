@@ -1,9 +1,12 @@
-import React, { createContext, useContext, useState, ReactNode } from 'react';
+import React, { createContext, useContext, useState, useCallback, ReactNode } from 'react';
 import { Lobby } from '../types/lobby';
-import { MOCK_MY_LOBBIES } from '../services/mock/lobby';
+import { useAuth } from './AuthContext';
+import { authApi } from '../services/api';
 
 interface MyLobbiesContextValue {
   lobbies: Lobby[];
+  loading: boolean;
+  refreshLobbies: () => Promise<void>;
   addLobby: (lobby: Lobby) => void;
   updateLobby: (lobby: Lobby) => void;
   deleteLobby: (lobbyId: string) => void;
@@ -12,8 +15,20 @@ interface MyLobbiesContextValue {
 const MyLobbiesContext = createContext<MyLobbiesContextValue | undefined>(undefined);
 
 export function MyLobbiesProvider({ children }: { children: ReactNode }) {
-  // TODO: trocar por chamada real em services/api.ts assim que existir
-  const [lobbies, setLobbies] = useState<Lobby[]>(MOCK_MY_LOBBIES);
+  const { authFetch, isAuthenticated } = useAuth();
+  const [lobbies, setLobbies] = useState<Lobby[]>([]);
+  const [loading, setLoading] = useState(false);
+
+  const refreshLobbies = useCallback(async () => {
+    if (!isAuthenticated) return;
+    setLoading(true);
+    try {
+      const result = await authApi.listMyLobbies(authFetch);
+      setLobbies(result);
+    } finally {
+      setLoading(false);
+    }
+  }, [authFetch, isAuthenticated]);
 
   function addLobby(lobby: Lobby) {
     setLobbies((prev) => [lobby, ...prev]);
@@ -28,7 +43,9 @@ export function MyLobbiesProvider({ children }: { children: ReactNode }) {
   }
 
   return (
-    <MyLobbiesContext.Provider value={{ lobbies, addLobby, updateLobby, deleteLobby }}>
+    <MyLobbiesContext.Provider
+      value={{ lobbies, loading, refreshLobbies, addLobby, updateLobby, deleteLobby }}
+    >
       {children}
     </MyLobbiesContext.Provider>
   );

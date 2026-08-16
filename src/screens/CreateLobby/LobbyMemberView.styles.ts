@@ -71,6 +71,19 @@ export const styles = StyleSheet.create({
     fontWeight: '600',
     color: '#111',
   },
+  adminBadge: {
+    backgroundColor: '#111',
+    paddingHorizontal: 8,
+    paddingVertical: 3,
+    borderRadius: 999,
+    marginLeft: 'auto',
+  },
+  adminBadgeText: {
+    fontSize: 10,
+    fontWeight: '700',
+    color: '#fff',
+    letterSpacing: 0.5,
+  },
   footer: {
     paddingHorizontal: 20,
     paddingBottom: 28,
