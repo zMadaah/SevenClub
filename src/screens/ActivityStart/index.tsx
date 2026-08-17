@@ -118,6 +118,10 @@ export default function ActivityStart() {
       const endedAt = new Date();
       const startedAt = new Date(endedAt.getTime() - tracker.elapsedSeconds * 1000);
 
+      const distanceMeters = tracker.distanceMeters;
+      const durationLabel = formatDuration(tracker.elapsedSeconds);
+      const paceLabel = tracker.paceLabel;
+
       await authApi.createActivity(authFetch, {
         name: activityName.trim(),
         activityType,
@@ -129,7 +133,12 @@ export default function ActivityStart() {
       setSummaryVisible(false);
       setActivityName('');
       tracker.reset();
-      navigation.goBack();
+      navigation.replace('ShareActivity', {
+        distanceMeters,
+        durationLabel,
+        paceLabel,
+        activityType,
+      });
     } catch (err) {
       const message = err instanceof ApiError ? err.message : 'Não foi possível salvar a atividade.';
       Alert.alert('Ops', message);

@@ -39,11 +39,7 @@ export default function HomeHeader({
               onPress={() => navigation.navigate('Profile')}
             >
               <Image
-                source={{
-                  uri:
-                    avatar ??
-                    'https://i.pravatar.cc/150?img=10',
-                }}
+                source={{ uri: avatar ?? 'https://i.pravatar.cc/150?img=10',}}
                 style={styles.avatar}
               />
             </TouchableOpacity>

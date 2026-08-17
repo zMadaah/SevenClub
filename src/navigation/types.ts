@@ -11,6 +11,12 @@ export type RootStackParamList = {
     Profile: undefined;
     Private: undefined;
     ActivityStart: { presetRouteId?: string } | undefined;
+    ShareActivity: {
+      distanceMeters: number;
+      durationLabel: string;
+      paceLabel: string;
+      activityType: 'run' | 'ride';
+    };
     RoutePlan: undefined;
     JoinLobby: undefined;
     CreateLobby: { lobbyId?: string } | undefined;

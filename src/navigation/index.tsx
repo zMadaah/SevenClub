@@ -18,6 +18,7 @@ import NewPassword from '../screens/NewPassword';
 import Profile from '../screens/Profile';
 import Private from '../screens/Private';
 import ActivityStart from '../screens/ActivityStart';
+import ShareActivity from '../screens/ShareActivity';
 import RoutePlan from '../screens/RoutePlan';
 import CreateLobby from '../screens/CreateLobby';
 import JoinLobby from '../screens/JoinLobby';
@@ -81,6 +82,7 @@ function RootNavigator() {
           <Stack.Screen name="Profile" component={Profile} />
           <Stack.Screen name="Private" component={Private} />
           <Stack.Screen name="ActivityStart" component={ActivityStart} />
+          <Stack.Screen name="ShareActivity" component={ShareActivity} />
           <Stack.Screen name="RoutePlan" component={RoutePlan} />
           <Stack.Screen name="CreateLobby" component={CreateLobby} />
           <Stack.Screen name="LobbyConfirmed" component={LobbyConfirmed} />

@@ -1,0 +1,175 @@
+import { StyleSheet, Dimensions } from 'react-native';
+
+const { width: SCREEN_WIDTH } = Dimensions.get('window');
+// Proporção de Stories (9:16) — o formato que qualquer rede social aceita
+// bem, seja postado como story ou recortado depois pro feed.
+const CARD_HEIGHT = (SCREEN_WIDTH - 32) * (16 / 9);
+
+export const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    backgroundColor: '#061414',
+    paddingTop: 56,
+  },
+  header: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingHorizontal: 20,
+    marginBottom: 16,
+  },
+  skipText: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: 'rgba(255,255,255,0.7)',
+    width: 40,
+  },
+  headerTitle: {
+    fontSize: 16,
+    fontWeight: '800',
+    color: '#fff',
+  },
+  cardWrapper: {
+    width: SCREEN_WIDTH - 32,
+    height: CARD_HEIGHT,
+    alignSelf: 'center',
+    borderRadius: 20,
+    overflow: 'hidden',
+    backgroundColor: '#111',
+  },
+  cardBackground: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    width: '100%',
+    height: '100%',
+  },
+  cardBackgroundPlaceholder: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: '#1A2E2E',
+  },
+  cardGradient: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+  },
+  brandRow: {
+    position: 'absolute',
+    top: 20,
+    left: 20,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
+  brandMark: {
+    width: 26,
+    height: 26,
+    borderRadius: 8,
+    backgroundColor: '#BCFF00',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  brandMarkText: {
+    fontSize: 14,
+    fontWeight: '900',
+    color: '#061414',
+  },
+  brandWordmark: {
+    fontSize: 14,
+    fontWeight: '800',
+    color: '#fff',
+    letterSpacing: 1,
+  },
+  statsRow: {
+    position: 'absolute',
+    bottom: 24,
+    left: 20,
+    right: 20,
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  statColumn: {
+    flex: 1,
+  },
+  statDivider: {
+    width: 1,
+    height: 32,
+    backgroundColor: 'rgba(255,255,255,0.25)',
+    marginHorizontal: 12,
+  },
+  statLabel: {
+    fontSize: 10,
+    fontWeight: '700',
+    color: 'rgba(255,255,255,0.7)',
+    letterSpacing: 0.5,
+    marginBottom: 2,
+  },
+  statValue: {
+    fontSize: 18,
+    fontWeight: '800',
+    color: '#fff',
+  },
+  pickPhotoButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 8,
+    alignSelf: 'center',
+    marginTop: 16,
+    paddingHorizontal: 16,
+    paddingVertical: 10,
+    borderRadius: 999,
+    backgroundColor: '#fff',
+  },
+  pickPhotoText: {
+    fontSize: 13,
+    fontWeight: '700',
+    color: '#111',
+  },
+  actionsRow: {
+    flexDirection: 'row',
+    gap: 12,
+    paddingHorizontal: 20,
+    marginTop: 'auto',
+    marginBottom: 32,
+  },
+  actionButtonOutline: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 8,
+    borderWidth: 1.5,
+    borderColor: '#fff',
+    borderRadius: 14,
+    paddingVertical: 14,
+  },
+  actionButtonOutlineText: {
+    fontSize: 13,
+    fontWeight: '700',
+    color: '#fff',
+  },
+  actionButtonSolid: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 8,
+    backgroundColor: '#BCFF00',
+    borderRadius: 14,
+    paddingVertical: 14,
+  },
+  actionButtonSolidText: {
+    fontSize: 13,
+    fontWeight: '700',
+    color: '#061414',
+  },
+  actionButtonDisabled: {
+    opacity: 0.6,
+  },
+});
