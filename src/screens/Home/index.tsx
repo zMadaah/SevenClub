@@ -1,7 +1,7 @@
-import React, { useState } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import { View, Text, TouchableOpacity } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { useNavigation } from '@react-navigation/native';
+import { useNavigation, useFocusEffect } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { RootStackParamList } from '../../navigation/types';
 
@@ -9,7 +9,10 @@ import Header from '../../Header';
 import Map from '../../Map';
 import LobbyListModal from './components/LobbyListModal';
 import { useActiveLobby } from '../../contexts/ActiveLobbyContext';
+import { useMyLobbies } from '../../contexts/MyLobbiesContext';
 import { useGameMode } from '../../contexts/GameModeContext';
+import { useAuth } from '../../contexts/AuthContext';
+import { authApi, MyProfile } from '../../services/api';
 
 import { styles } from './styles';
 import { ActivityMode } from '../../Header/types';
@@ -24,14 +27,44 @@ export default function Home() {
   const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
   const { activeLobby, setActiveLobby } = useActiveLobby();
   const [lobbyModalVisible, setLobbyModalVisible] = useState(false);
+  const { authFetch, userId } = useAuth();
+  const [profile, setProfile] = useState<MyProfile | null>(null);
+  const { refreshLobbies } = useMyLobbies();
+
+  // Sem isso, "activeLobby" nasce null toda vez que o app abre — mesmo o
+  // lobby continuando salvo no banco. É por isso que fechar e reabrir o
+  // app fazia parecer que o lobby tinha sumido: o dado nunca foi
+  // perdido, só nunca era buscado de novo no início.
+  useEffect(() => {
+    if (!userId || activeLobby) return;
+    refreshLobbies().then((result) => {
+      if (result.length > 0) {
+        setActiveLobby(result[0]);
+      }
+    });
+  }, [userId]);
+
+  // useFocusEffect (não useEffect): a Home fica montada o tempo todo por
+  // trás de outras telas — sem isso, editar a foto em EditProfile e
+  // voltar pra Home não atualizava o avatar do cabeçalho.
+  useFocusEffect(
+    useCallback(() => {
+      authApi
+        .me(authFetch)
+        .then(setProfile)
+        .catch(() => {
+          // cabeçalho funciona com o avatar genérico se isso falhar
+        });
+    }, [authFetch])
+  );
 
   return (
     <View style={styles.container}>
       <Map />
 
       <Header
-        avatar="https://i.pravatar.cc/150?img=10"
-        username="João"
+        avatar={profile?.avatarUrl ?? undefined}
+        username={profile?.displayName ?? 'João'}
         selectedCategory={gameMode}
         activityMode={activityMode}
         onCategoryChange={setGameMode}

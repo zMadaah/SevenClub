@@ -6,7 +6,7 @@ import { authApi } from '../services/api';
 interface MyLobbiesContextValue {
   lobbies: Lobby[];
   loading: boolean;
-  refreshLobbies: () => Promise<void>;
+  refreshLobbies: () => Promise<Lobby[]>;
   addLobby: (lobby: Lobby) => void;
   updateLobby: (lobby: Lobby) => void;
   deleteLobby: (lobbyId: string) => void;
@@ -20,11 +20,12 @@ export function MyLobbiesProvider({ children }: { children: ReactNode }) {
   const [loading, setLoading] = useState(false);
 
   const refreshLobbies = useCallback(async () => {
-    if (!isAuthenticated) return;
+    if (!isAuthenticated) return [];
     setLoading(true);
     try {
       const result = await authApi.listMyLobbies(authFetch);
       setLobbies(result);
+      return result;
     } finally {
       setLoading(false);
     }

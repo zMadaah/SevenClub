@@ -66,10 +66,7 @@ export default function ViewHistory() {
         <TouchableOpacity onPress={() => navigation.goBack()}>
           <Ionicons name="chevron-back" size={20} color={colors.textPrimary} />
         </TouchableOpacity>
-
-        <TouchableOpacity onPress={() => navigation.goBack()}>
-          <Text style={styles.headerTitle}>Voltar</Text>
-        </TouchableOpacity>
+        <Text style={styles.headerTitle}>Voltar</Text>
       </View>
 
       <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
@@ -168,7 +165,7 @@ export default function ViewHistory() {
               <Text style={styles.statBigUnit}>KM²</Text>
             </Text>
 
-            <Text style={styles.statSectionTitle}>Domínios</Text>
+            <Text style={styles.statSectionTitle}>Domínios (hexágonos possuídos)</Text>
             <Text style={styles.statBig}>{history?.totals.cellsOwned ?? 0}</Text>
           </>
         )}

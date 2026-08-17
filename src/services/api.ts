@@ -283,6 +283,15 @@ export interface RivalEntryApi {
   activityType: 'run' | 'ride';
 }
 
+export interface LobbyChatMessageApi {
+  id: string;
+  senderId: string;
+  senderName: string;
+  senderAvatarUrl: string;
+  text: string;
+  createdAt: string;
+}
+
 export interface LobbyInput {
   name: string;
   pictureUri?: string;
@@ -290,6 +299,8 @@ export interface LobbyInput {
   allowMemberInvitations: boolean;
   inGameChatEnabled: boolean;
   maxLobbySize: number | null;
+  startsAt?: string | null;
+  endsAt?: string | null;
 }
 
 export interface UserSearchResult {
@@ -495,6 +506,17 @@ export const authApi = {
   getFollowCounts: (authFetch: AuthFetch) =>
     authFetch<{ followingCount: number; followersCount: number }>('/follows/counts'),
 
+  // --- Chat de lobby --------------------------------------------------------
+
+  getLobbyMessages: (authFetch: AuthFetch, lobbyId: string) =>
+    authFetch<LobbyChatMessageApi[]>(`/lobbies/${lobbyId}/messages`),
+
+  sendLobbyMessage: (authFetch: AuthFetch, lobbyId: string, text: string) =>
+    authFetch<LobbyChatMessageApi>(`/lobbies/${lobbyId}/messages`, {
+      method: 'POST',
+      body: JSON.stringify({ text }),
+    }),
+
   // --- Preferências de notificação -------------------------------------
   // Isto só guarda o que a pessoa quer receber — o envio de verdade
   // (push notification quando alguém curte, comenta, rouba território
@@ -514,9 +536,13 @@ export const authApi = {
 
   getLeaderboard: (
     authFetch: AuthFetch,
-    scope: 'country' | 'area' | 'friends',
-    activityType: 'run' | 'ride'
-  ) => authFetch<LeaderboardResponse>(`/leaderboard?scope=${scope}&activityType=${activityType}`),
+    scope: 'country' | 'area' | 'friends' | 'lobby',
+    activityType: 'run' | 'ride',
+    lobbyId?: string
+  ) =>
+    authFetch<LeaderboardResponse>(
+      `/leaderboard?scope=${scope}&activityType=${activityType}${lobbyId ? `&lobbyId=${lobbyId}` : ''}`
+    ),
 
   // --- Perfil ----------------------------------------------------------------
 

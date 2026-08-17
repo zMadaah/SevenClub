@@ -70,9 +70,7 @@ export default function Social() {
   return (
     <View style={styles.container}>
       <View style={styles.topBar}>
-        <TouchableOpacity onPress={() => navigation.navigate('Profile')}>
-          <Image source={{ uri: 'https://i.pravatar.cc/200?img=10' }} style={styles.avatar} />
-        </TouchableOpacity>
+        <Image source={{ uri: 'https://i.pravatar.cc/200?img=10' }} style={styles.avatar} />
 
         <View style={styles.filters}>
           <TouchableOpacity style={styles.filterPill} onPress={() => setExploreModalVisible(true)}>

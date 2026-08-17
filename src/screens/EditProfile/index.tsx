@@ -245,7 +245,9 @@ export default function EditProfile() {
                         setDisplayName(text);
                     }}
                 />
-                
+                <Text style={styles.helperText}>
+                    É esse nome que aparece pro resto do app — segue Nome + Sobrenome até você editar aqui.
+                </Text>
 
                 <TextInput
                     style={styles.input}

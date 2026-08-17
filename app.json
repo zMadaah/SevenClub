@@ -38,6 +38,7 @@
       "favicon": "./assets/seven.jpg"
     },
     "plugins": [
+      "@react-native-community/datetimepicker",
       "expo-secure-store"
     ]
   }

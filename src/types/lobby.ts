@@ -16,6 +16,8 @@ export interface Lobby {
   inGameChatEnabled: boolean;
   maxLobbySize: number | null;
   inviteCode: string;
+  startsAt: string | null;
+  endsAt: string | null;
   members: LobbyMember[];
   createdAt: number;
 }

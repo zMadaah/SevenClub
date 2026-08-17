@@ -1,6 +1,6 @@
-import React, { useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { View, Text, TouchableOpacity, Alert } from 'react-native';
-import { useNavigation } from '@react-navigation/native';
+import { useNavigation, useRoute, RouteProp } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { Ionicons } from '@expo/vector-icons';
 
@@ -30,6 +30,7 @@ import { styles } from './styles';
 
 export default function ActivityStart() {
   const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
+  const route = useRoute<RouteProp<RootStackParamList, 'ActivityStart'>>();
   const { authFetch } = useAuth();
   const tracker = useActivityTracker();
 
@@ -48,6 +49,15 @@ export default function ActivityStart() {
   const [showRoutesOverlay, setShowRoutesOverlay] = useState(false);
 
   const activityTypeLabel = activityType === 'run' ? 'Corrida' : 'Pedal';
+
+  // Chegou aqui pela tela "Ver territórios" (botão "usar esta rota")? Assim
+  // que a lista de rotas salvas carregar, pré-seleciona a rota pedida.
+  useEffect(() => {
+    const presetRouteId = route.params?.presetRouteId;
+    if (!presetRouteId) return;
+    const preset = savedRoutes.find((r) => r.id === presetRouteId);
+    if (preset) setSelectedRoute(preset);
+  }, [route.params?.presetRouteId, savedRoutes]);
 
   const loopClosed = useMemo(() => isLoopClosed(tracker.points), [tracker.points]);
   const captureM2 = useMemo(

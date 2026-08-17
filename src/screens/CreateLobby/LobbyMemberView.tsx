@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { View, Text, TouchableOpacity, Image, ScrollView, Alert, Share } from 'react-native';
+import React, { useEffect, useState } from 'react';
+import { View, Text, TouchableOpacity, Image, ScrollView, Alert, Share, ActivityIndicator } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useNavigation } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
@@ -7,11 +7,14 @@ import * as Clipboard from 'expo-clipboard';
 
 import { RootStackParamList } from '../../navigation/types';
 import { Lobby } from '../../types/lobby';
+import { LeaderboardEntry, MyRankEntry } from '../../types/leaderboard';
 import { useActiveLobby } from '../../contexts/ActiveLobbyContext';
 import { useMyLobbies } from '../../contexts/MyLobbiesContext';
 import { useGameMode } from '../../contexts/GameModeContext';
 import { useAuth } from '../../contexts/AuthContext';
 import { authApi, ApiError } from '../../services/api';
+import LeaderboardRow from '../Leaderboard/components/LeaderboardRow';
+import MyRankRow from '../Leaderboard/components/MyRankRow';
 import { styles } from './LobbyMemberView.styles';
 
 // TODO: trocar pelo domínio real assim que existir (mesmo link usado em
@@ -29,6 +32,25 @@ export default function LobbyMemberView({ lobby }: LobbyMemberViewProps) {
   const { setGameMode } = useGameMode();
   const { authFetch } = useAuth();
   const [codeCopied, setCodeCopied] = useState(false);
+  const [rankingActivityType, setRankingActivityType] = useState<'run' | 'ride'>('run');
+  const [rankingEntries, setRankingEntries] = useState<LeaderboardEntry[]>([]);
+  const [rankingMyRank, setRankingMyRank] = useState<MyRankEntry | null>(null);
+  const [rankingLoading, setRankingLoading] = useState(false);
+
+  useEffect(() => {
+    setRankingLoading(true);
+    authApi
+      .getLeaderboard(authFetch, 'lobby', rankingActivityType, lobby.id)
+      .then((result) => {
+        setRankingEntries(result.entries);
+        setRankingMyRank(result.myRank);
+      })
+      .catch(() => {
+        // ranking é um extra nessa tela — uma falha aqui não deveria
+        // travar o resto com um alerta
+      })
+      .finally(() => setRankingLoading(false));
+  }, [lobby.id, rankingActivityType, authFetch]);
 
   async function handleCopyInviteCode() {
     await Clipboard.setStringAsync(lobby.inviteCode);
@@ -88,6 +110,13 @@ export default function LobbyMemberView({ lobby }: LobbyMemberViewProps) {
           )}
         </View>
         <Text style={styles.lobbyName}>{lobby.name}</Text>
+        {(lobby.startsAt || lobby.endsAt) && (
+          <Text style={styles.eventDatesText}>
+            {lobby.startsAt ? new Date(lobby.startsAt).toLocaleDateString('pt-BR') : '?'}
+            {' — '}
+            {lobby.endsAt ? new Date(lobby.endsAt).toLocaleDateString('pt-BR') : '?'}
+          </Text>
+        )}
       </View>
 
       <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
@@ -110,6 +139,36 @@ export default function LobbyMemberView({ lobby }: LobbyMemberViewProps) {
               <Text style={styles.memberName}>{member.name}</Text>
             </View>
           ))
+        )}
+
+        <View style={styles.divider} />
+
+        <View style={styles.rankingHeaderRow}>
+          <Text style={styles.sectionTitle}>Ranking do lobby</Text>
+          <TouchableOpacity
+            style={styles.rankingToggle}
+            onPress={() => setRankingActivityType((prev) => (prev === 'run' ? 'ride' : 'run'))}
+          >
+            <Ionicons name={rankingActivityType === 'ride' ? 'bicycle' : 'walk'} size={14} color="#111" />
+            <Text style={styles.rankingToggleText}>
+              {rankingActivityType === 'ride' ? 'Pedal' : 'Corrida'}
+            </Text>
+          </TouchableOpacity>
+        </View>
+
+        {rankingLoading ? (
+          <ActivityIndicator color="#111" style={{ marginVertical: 12 }} />
+        ) : rankingEntries.length === 0 && !rankingMyRank ? (
+          <Text style={styles.emptyMembersText}>
+            Ninguém marcou território nesse tipo de atividade ainda.
+          </Text>
+        ) : (
+          <>
+            {rankingMyRank && <MyRankRow myRank={rankingMyRank} />}
+            {rankingEntries.map((entry) => (
+              <LeaderboardRow key={entry.id} entry={entry} />
+            ))}
+          </>
         )}
 
         <>

@@ -20,7 +20,7 @@ import { styles } from './styles';
 interface SupportMessage {
   id: string;
   ticketId: string;
-  sender: 'user' | 'admin';
+  sender: 'user' | 'staff';
   text: string;
   createdAt: string;
 }
@@ -28,11 +28,17 @@ interface SupportMessage {
 const WELCOME_MESSAGE: SupportMessage = {
   id: 'welcome',
   ticketId: '',
-  sender: 'admin',
+  sender: 'staff',
   text:
     'Oi! Conta pra gente o que está acontecendo — quanto mais detalhes (o que você estava fazendo, o que esperava que acontecesse), mais rápido conseguimos ajudar.',
   createdAt: new Date().toISOString(),
 };
+
+// Não é WebSocket — pra um chat de suporte, buscar de novo a cada poucos
+// segundos já dá a sensação de "chegou na hora" sem precisar de
+// infraestrutura de tempo real. Se um dia isso não for suficiente
+// (latência importar de verdade), aí sim vale migrar pra algo com push.
+const POLL_INTERVAL_MS = 4000;
 
 export default function SupportChat() {
   const navigation = useNavigation();
@@ -54,6 +60,25 @@ export default function SupportChat() {
         // sem ticket ainda é normal (primeira vez que a pessoa abre o chat)
       })
       .finally(() => setLoading(false));
+  }, [authFetch]);
+
+  // Enquanto a tela estiver aberta, busca de novo periodicamente — é
+  // assim que uma resposta do staff aparece sem precisar sair e voltar
+  // pra tela.
+  useEffect(() => {
+    const interval = setInterval(() => {
+      authApi
+        .listSupportMessages(authFetch)
+        .then((existing) => {
+          if (existing.length > 0) setMessages([WELCOME_MESSAGE, ...existing]);
+        })
+        .catch(() => {
+          // silencioso — um poll falhar não deveria interromper o chat
+          // com um alerta, só tenta de novo no próximo ciclo
+        });
+    }, POLL_INTERVAL_MS);
+
+    return () => clearInterval(interval);
   }, [authFetch]);
 
   async function handleSend() {

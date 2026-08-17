@@ -5,6 +5,11 @@ import { useNavigation, useRoute, RouteProp } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import * as ImagePicker from 'expo-image-picker';
 import * as Clipboard from 'expo-clipboard';
+import DateTimePicker, { DateTimePickerEvent } from '@react-native-community/datetimepicker';
+
+import LeaderboardRow from '../Leaderboard/components/LeaderboardRow';
+import MyRankRow from '../Leaderboard/components/MyRankRow';
+import { LeaderboardEntry, MyRankEntry } from '../../types/leaderboard';
 
 import { RootStackParamList } from '../../navigation/types';
 import { Lobby } from '../../types/lobby';
@@ -42,6 +47,14 @@ export default function CreateLobby() {
   const [inGameChatEnabled, setInGameChatEnabled] = useState(true);
   const [maxLobbySizeEnabled, setMaxLobbySizeEnabled] = useState(false);
   const [maxLobbySize, setMaxLobbySize] = useState('20');
+  const [startsAt, setStartsAt] = useState<Date | null>(null);
+  const [endsAt, setEndsAt] = useState<Date | null>(null);
+  const [showStartPicker, setShowStartPicker] = useState(false);
+  const [showEndPicker, setShowEndPicker] = useState(false);
+  const [rankingActivityType, setRankingActivityType] = useState<'run' | 'ride'>('run');
+  const [rankingEntries, setRankingEntries] = useState<LeaderboardEntry[]>([]);
+  const [rankingMyRank, setRankingMyRank] = useState<MyRankEntry | null>(null);
+  const [rankingLoading, setRankingLoading] = useState(false);
   const [saving, setSaving] = useState(false);
   const [uploadingPicture, setUploadingPicture] = useState(false);
   const [codeCopied, setCodeCopied] = useState(false);
@@ -80,7 +93,25 @@ export default function CreateLobby() {
     if (editingLobby.maxLobbySize !== null) {
       setMaxLobbySize(String(editingLobby.maxLobbySize));
     }
+    setStartsAt(editingLobby.startsAt ? new Date(editingLobby.startsAt) : null);
+    setEndsAt(editingLobby.endsAt ? new Date(editingLobby.endsAt) : null);
   }, [editingLobby]);
+
+  useEffect(() => {
+    if (!isEditing || !editingLobby) return;
+    setRankingLoading(true);
+    authApi
+      .getLeaderboard(authFetch, 'lobby', rankingActivityType, editingLobby.id)
+      .then((result) => {
+        setRankingEntries(result.entries);
+        setRankingMyRank(result.myRank);
+      })
+      .catch(() => {
+        // ranking é um extra na tela de configurações — uma falha aqui
+        // não deveria travar o resto da tela com alerta
+      })
+      .finally(() => setRankingLoading(false));
+  }, [isEditing, editingLobby?.id, rankingActivityType, authFetch]);
 
   const canSave = name.trim().length > 0 && !saving && !uploadingPicture;
 
@@ -150,8 +181,31 @@ export default function CreateLobby() {
     ]);
   }
 
+  function handleChangeStartDate(event: DateTimePickerEvent, selectedDate?: Date) {
+    setShowStartPicker(false);
+    if (event.type === 'dismissed' || !selectedDate) return;
+    setStartsAt(selectedDate);
+    // se o fim já estava antes do novo início, empurra o fim junto —
+    // evita ficar com um intervalo invertido sem a pessoa perceber
+    if (endsAt && endsAt < selectedDate) {
+      setEndsAt(selectedDate);
+    }
+  }
+
+  function handleChangeEndDate(event: DateTimePickerEvent, selectedDate?: Date) {
+    setShowEndPicker(false);
+    if (event.type === 'dismissed' || !selectedDate) return;
+    setEndsAt(selectedDate);
+  }
+
   async function handleSave() {
     if (!canSave) return;
+
+    if (startsAt && endsAt && endsAt < startsAt) {
+      Alert.alert('Datas inválidas', 'O fim do evento precisa ser depois do início.');
+      return;
+    }
+
     setSaving(true);
     try {
       const payload = {
@@ -161,6 +215,8 @@ export default function CreateLobby() {
         allowMemberInvitations,
         inGameChatEnabled,
         maxLobbySize: maxLobbySizeEnabled ? Number(maxLobbySize) || null : null,
+        startsAt: startsAt ? startsAt.toISOString() : null,
+        endsAt: endsAt ? endsAt.toISOString() : null,
       };
 
       if (isEditing && editingLobby) {
@@ -312,6 +368,63 @@ export default function CreateLobby() {
           </View>
         )}
 
+        <Text style={styles.sectionTitle}>Duração do evento (opcional)</Text>
+        <Text style={styles.emptyMembersText}>
+          Defina quando o desafio deste lobby começa e termina — deixe em branco se não quiser um prazo.
+        </Text>
+
+        <View style={styles.dateRow}>
+          <TouchableOpacity style={styles.dateBox} onPress={() => setShowStartPicker(true)}>
+            <Ionicons name="calendar-outline" size={16} color="#111" />
+            <View style={{ flex: 1 }}>
+              <Text style={styles.dateLabel}>Início</Text>
+              <Text style={styles.dateValue}>
+                {startsAt ? startsAt.toLocaleDateString('pt-BR') : 'Selecionar'}
+              </Text>
+            </View>
+          </TouchableOpacity>
+
+          <TouchableOpacity style={styles.dateBox} onPress={() => setShowEndPicker(true)}>
+            <Ionicons name="calendar-outline" size={16} color="#111" />
+            <View style={{ flex: 1 }}>
+              <Text style={styles.dateLabel}>Fim</Text>
+              <Text style={styles.dateValue}>
+                {endsAt ? endsAt.toLocaleDateString('pt-BR') : 'Selecionar'}
+              </Text>
+            </View>
+          </TouchableOpacity>
+        </View>
+
+        {(startsAt || endsAt) && (
+          <TouchableOpacity
+            onPress={() => {
+              setStartsAt(null);
+              setEndsAt(null);
+            }}
+          >
+            <Text style={styles.clearDatesText}>Remover datas</Text>
+          </TouchableOpacity>
+        )}
+
+        {showStartPicker && (
+          <DateTimePicker
+            value={startsAt ?? new Date()}
+            mode="date"
+            display="default"
+            onChange={handleChangeStartDate}
+          />
+        )}
+
+        {showEndPicker && (
+          <DateTimePicker
+            value={endsAt ?? startsAt ?? new Date()}
+            mode="date"
+            display="default"
+            minimumDate={startsAt ?? undefined}
+            onChange={handleChangeEndDate}
+          />
+        )}
+
         {isEditing && editingLobby && (
           <>
             <View style={styles.divider} />
@@ -339,6 +452,36 @@ export default function CreateLobby() {
                   <Text style={styles.memberName}>{member.name}</Text>
                 </View>
               ))
+            )}
+
+            <View style={styles.divider} />
+
+            <View style={styles.rankingHeaderRow}>
+              <Text style={styles.sectionTitle}>Ranking do lobby</Text>
+              <TouchableOpacity
+                style={styles.rankingToggle}
+                onPress={() => setRankingActivityType((prev) => (prev === 'run' ? 'ride' : 'run'))}
+              >
+                <Ionicons name={rankingActivityType === 'ride' ? 'bicycle' : 'walk'} size={14} color="#111" />
+                <Text style={styles.rankingToggleText}>
+                  {rankingActivityType === 'ride' ? 'Pedal' : 'Corrida'}
+                </Text>
+              </TouchableOpacity>
+            </View>
+
+            {rankingLoading ? (
+              <ActivityIndicator color="#111" style={{ marginVertical: 12 }} />
+            ) : rankingEntries.length === 0 && !rankingMyRank ? (
+              <Text style={styles.emptyMembersText}>
+                Ninguém marcou território nesse tipo de atividade ainda.
+              </Text>
+            ) : (
+              <>
+                {rankingMyRank && <MyRankRow myRank={rankingMyRank} />}
+                {rankingEntries.map((entry) => (
+                  <LeaderboardRow key={entry.id} entry={entry} />
+                ))}
+              </>
             )}
 
             <View style={styles.divider} />
