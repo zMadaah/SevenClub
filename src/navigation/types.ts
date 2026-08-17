@@ -45,6 +45,7 @@ export type RootStackParamList = {
     };
     Leaderboard: undefined;
     Rivals: undefined;
+    AllBadges: undefined;
     MapVisibility: undefined;
     ProfileVisibility: undefined;
     BlockedUsers: undefined;

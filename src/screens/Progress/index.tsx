@@ -284,14 +284,19 @@ export default function Progress() {
             </View>
           )}
 
-          <View style={styles.sectionHeader}>
+          <TouchableOpacity
+            style={styles.sectionHeader}
+            onPress={() => navigation.navigate('AllBadges')}
+            activeOpacity={0.7}
+          >
             <Ionicons name="medal-outline" size={22} color="#111" />
             <Text style={styles.sectionTitle}>Insígnias</Text>
             <View style={{ flex: 1 }} />
             <View style={styles.seasonPill}>
               <Text style={styles.seasonPillText}>{summary?.season?.name ?? '—'}</Text>
             </View>
-          </View>
+            <Ionicons name="chevron-forward" size={18} color="#999" style={{ marginLeft: 6 }} />
+          </TouchableOpacity>
           <Text style={styles.sectionSubtitle}>
             Cada desafio concluído desbloqueia uma conquista.
           </Text>
