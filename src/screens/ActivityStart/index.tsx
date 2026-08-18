@@ -151,7 +151,12 @@ export default function ActivityStart() {
 
   return (
     <View style={styles.container}>
-      <Map showFloatingControls={false} points={tracker.points} referenceRoute={selectedRoute?.points} />
+      <Map
+        showFloatingControls={false}
+        points={tracker.points}
+        referenceRoute={selectedRoute?.points}
+        activityType={activityType}
+      />
 
       <View style={styles.header}>
         <TouchableOpacity style={styles.backButton} onPress={() => navigation.goBack()}>

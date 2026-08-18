@@ -181,8 +181,12 @@ export default function ViewTerritories() {
         onClose={() => setPickerVisible(false)}
         routes={savedRoutes}
         loading={loading}
-        onSelectRoute={handleSelectRoute}
+        onEditRoute={handleSelectRoute}
         onDeleteRoute={handleDeleteRoute}
+        onStartRoute={(route) => {
+          setPickerVisible(false);
+          navigation.navigate('ActivityStart', { presetRouteId: route.id });
+        }}
       />
     </View>
   );

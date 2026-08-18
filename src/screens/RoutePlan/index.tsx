@@ -2,6 +2,7 @@ import React, { useMemo, useRef, useState } from 'react';
 import { View, Text, TouchableOpacity, Alert } from 'react-native';
 import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
 import { useNavigation } from '@react-navigation/native';
+import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { LatLng } from 'react-native-maps';
 
 import Map, { MapHandle } from '../../Map';
@@ -11,6 +12,7 @@ import MyRoutesModal from './components/MyRoutesModal';
 import HelpModal from './components/HelpModal';
 
 import { SavedRoute } from '../../types/route';
+import { RootStackParamList } from '../../navigation/types';
 
 import { useSavedRoutes } from '../../contexts/SavedRoutesContext';
 import { ApiError } from '../../services/api';
@@ -21,7 +23,7 @@ import { styles } from './styles';
 const FREE_USES_LIMIT = 3;
 
 export default function RoutePlan() {
-  const navigation = useNavigation();
+  const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
   const mapRef = useRef<MapHandle>(null);
 
   const [points, setPoints] = useState<LatLng[]>([]);
@@ -96,6 +98,11 @@ export default function RoutePlan() {
     setPoints(route.points);
     setIsDrawing(false);
     setMyRoutesVisible(false);
+  }
+
+  function handleStartRoute(route: SavedRoute) {
+    setMyRoutesVisible(false);
+    navigation.navigate('ActivityStart', { presetRouteId: route.id });
   }
 
   async function handleDeleteRoute(id: string) {
@@ -235,8 +242,9 @@ export default function RoutePlan() {
         onClose={() => setMyRoutesVisible(false)}
         routes={savedRoutes}
         loading={loadingRoutes}
-        onSelectRoute={handleSelectRoute}
+        onEditRoute={handleSelectRoute}
         onDeleteRoute={handleDeleteRoute}
+        onStartRoute={handleStartRoute}
       />
 
       <HelpModal visible={helpVisible} onClose={() => setHelpVisible(false)} />

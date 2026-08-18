@@ -1,10 +1,12 @@
-import React, { forwardRef, useEffect, useImperativeHandle, useRef } from 'react';
+import React, { forwardRef, useCallback, useEffect, useImperativeHandle, useRef, useState } from 'react';
 import { View, Text, PanResponder } from 'react-native';
-import MapView, { Polyline, Polygon, Marker, LatLng } from 'react-native-maps';
+import MapView, { Polyline, Polygon, Marker, LatLng, Region } from 'react-native-maps';
 
 import { styles } from './styles';
 import { useLocation } from '../hooks/useLocation';
 import { isLoopClosed } from '../utils/geo';
+import { useAuth } from '../contexts/AuthContext';
+import { authApi, TerritoryCellView } from '../services/api';
 
 import UserLocation from './components/UserLocation';
 import FloatingControls from './components/FloatingControls';
@@ -24,6 +26,13 @@ interface MapProps {
   onMapPress?: (coordinate: LatLng) => void;
   showFloatingControls?: boolean;
   territory?: string;
+  // Qual grid H3 mostrar (corrida e pedal são grids independentes — ver
+  // migration 008). "Território de todo mundo" só faz sentido pedir um
+  // tipo de cada vez, igual o resto do app já faz (leaderboard, ranking).
+  activityType?: 'run' | 'ride';
+  // Desliga a camada de território — útil pra telas onde ver hexágono de
+  // todo mundo não faz sentido (ex: escolher uma foto, tela de perfil).
+  showTerritory?: boolean;
 }
 
 // distância mínima em pixels entre amostras do arrasto — evita gerar
@@ -38,11 +47,17 @@ function MapComponent(
     onMapPress,
     showFloatingControls = true,
     territory = '0,00 km²',
+    activityType = 'run',
+    showTerritory = true,
   }: MapProps,
   ref: React.Ref<MapHandle>
 ) {
   const mapRef = useRef<MapView>(null);
   const { location, permission } = useLocation();
+  const { authFetch, userId } = useAuth();
+
+  const [territoryCells, setTerritoryCells] = useState<TerritoryCellView[]>([]);
+  const fetchTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   // refs pra evitar closures desatualizadas dentro do PanResponder
   // (que é criado uma única vez via useRef)
@@ -113,6 +128,58 @@ function MapComponent(
 
   useImperativeHandle(ref, () => ({ centerOnUser: handleCenterMap }));
 
+  // Busca o território (mina + de todo mundo) da região visível, com
+  // debounce — sem isso, cada pixel de arrasto do mapa dispararia uma
+  // chamada nova. Só busca com zoom "de perto o bastante pra hexágono
+  // fazer sentido" — muito afastado, LIMIT 3000 do backend cortaria os
+  // dados de qualquer jeito e a tela ficaria poluída.
+  const handleRegionChangeComplete = useCallback(
+    (region: Region) => {
+      if (!showTerritory) return;
+      if (fetchTimeoutRef.current) clearTimeout(fetchTimeoutRef.current);
+
+      if (region.latitudeDelta > 0.05) {
+        setTerritoryCells([]);
+        return;
+      }
+
+      fetchTimeoutRef.current = setTimeout(() => {
+        authApi
+          .getTerritoryCells(authFetch, activityType, {
+            minLat: region.latitude - region.latitudeDelta / 2,
+            maxLat: region.latitude + region.latitudeDelta / 2,
+            minLng: region.longitude - region.longitudeDelta / 2,
+            maxLng: region.longitude + region.longitudeDelta / 2,
+          })
+          .then(setTerritoryCells)
+          .catch(() => {
+            // território é uma camada visual — uma falha aqui não deveria
+            // travar o mapa nem mostrar alerta
+          });
+      }, 400);
+    },
+    [authFetch, activityType, showTerritory]
+  );
+
+  // onRegionChangeComplete do MapView nem sempre dispara sozinho no
+  // primeiro carregamento — sem isso, o mapa abriria sem nenhum
+  // hexágono desenhado até a pessoa arrastar o dedo pela primeira vez.
+  useEffect(() => {
+    if (!location) return;
+    handleRegionChangeComplete({
+      latitude: location.coords.latitude,
+      longitude: location.coords.longitude,
+      latitudeDelta: 0.005,
+      longitudeDelta: 0.005,
+    });
+  }, [location, handleRegionChangeComplete]);
+
+  useEffect(() => {
+    return () => {
+      if (fetchTimeoutRef.current) clearTimeout(fetchTimeoutRef.current);
+    };
+  }, []);
+
   if (!permission) {
     return (
       <View style={styles.center}>
@@ -148,11 +215,22 @@ function MapComponent(
         zoomEnabled={!drawable}
         rotateEnabled={!drawable}
         pitchEnabled={!drawable}
+        onRegionChangeComplete={handleRegionChangeComplete}
       >
         <UserLocation
           latitude={location.coords.latitude}
           longitude={location.coords.longitude}
         />
+
+        {territoryCells.map((cell) => (
+          <Polygon
+            key={cell.h3Index}
+            coordinates={cell.boundary}
+            fillColor={cell.isMine ? 'rgba(188, 255, 0, 0.35)' : `${cell.ownerColor}59`}
+            strokeColor={cell.isMine ? '#BCFF00' : cell.ownerColor}
+            strokeWidth={1}
+          />
+        ))}
 
         {referenceRoute && referenceRoute.length > 1 && (
           <Polyline

@@ -269,6 +269,8 @@ export interface ChallengeStatus {
   xp: number;
   completed: boolean;
   claimed: boolean;
+  progress?: number;
+  target?: number;
 }
 
 export interface RivalEntryApi {
@@ -281,6 +283,15 @@ export interface RivalEntryApi {
   rivalTerritoryKm2: number;
   rivalSteals: number;
   activityType: 'run' | 'ride';
+}
+
+export interface TerritoryCellView {
+  h3Index: string;
+  ownerId: string;
+  ownerName: string;
+  ownerColor: string;
+  isMine: boolean;
+  boundary: { latitude: number; longitude: number }[];
 }
 
 export interface LobbyChatMessageApi {
@@ -505,6 +516,15 @@ export const authApi = {
 
   getFollowCounts: (authFetch: AuthFetch) =>
     authFetch<{ followingCount: number; followersCount: number }>('/follows/counts'),
+
+  getTerritoryCells: (
+    authFetch: AuthFetch,
+    activityType: 'run' | 'ride',
+    bounds: { minLat: number; maxLat: number; minLng: number; maxLng: number }
+  ) =>
+    authFetch<TerritoryCellView[]>(
+      `/territory/cells?activityType=${activityType}&minLat=${bounds.minLat}&maxLat=${bounds.maxLat}&minLng=${bounds.minLng}&maxLng=${bounds.maxLng}`
+    ),
 
   // --- Chat de lobby --------------------------------------------------------
 

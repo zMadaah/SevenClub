@@ -1,10 +1,11 @@
-import React, { useCallback, useEffect, useState } from 'react';
-import { View, Text, ScrollView, TouchableOpacity, Image, Alert } from 'react-native';
+import React, { useCallback, useState } from 'react';
+import { View, Text, ScrollView, TouchableOpacity, Image, Alert, Linking } from 'react-native';
 import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
-import { useNavigation } from '@react-navigation/native';
+import { useNavigation, useFocusEffect } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
-import { RootStackParamList } from '../../navigation/types';
+import { RootStackParamList, BottomTabsParamList } from '../../navigation/types';
 import { styles } from './styles';
+import * as StoreReview from 'expo-store-review';
 
 import RivalCard from '../../components/RivalCard';
 import BadgeCard from './components/BadgeCard';
@@ -16,6 +17,7 @@ import { useAuth } from '../../contexts/AuthContext';
 import {
   authApi,
   ApiError,
+  MyProfile,
   ProgressSummary,
   BadgeStatus,
   ChallengeStatus,
@@ -26,11 +28,43 @@ import { ActivityType } from '../../types/lobby';
 const TABS = ['Progresso', 'Atividades'];
 const YOUR_COLOR = '#BCFF00';
 
-const CHALLENGE_META: Record<string, { title: string; icon: 'watch' | 'friend' | 'profile' }> = {
-  c1: { title: 'Conectar relógio Garmin', icon: 'watch' },
-  c2: { title: 'Seguir um amigo', icon: 'friend' },
-  c3: { title: 'Adicionar foto de perfil', icon: 'profile' },
+// TODO: trocar pelo @ de verdade do Seven Club assim que a conta oficial existir
+const INSTAGRAM_URL = 'https://instagram.com/sevenclub.lab';
+
+type ChallengeIcon = 'watch' | 'friend' | 'profile' | 'instagram' | 'run' | 'star' | 'image';
+type ChallengeKind = 'navigate' | 'external' | 'progress' | 'review';
+
+const CHALLENGE_META: Record<
+  string,
+  { title: string; icon: ChallengeIcon; kind: ChallengeKind; screen?: keyof RootStackParamList | keyof BottomTabsParamList }
+> = {
+  c1: { title: 'Conectar relógio Garmin', icon: 'watch', kind: 'navigate' }, // sem tela — integração ainda não existe
+  c2: { title: 'Seguir um amigo', icon: 'friend', kind: 'navigate', screen: 'AddFriend' },
+  c3: { title: 'Adicionar foto de perfil', icon: 'profile', kind: 'navigate', screen: 'EditProfile' },
+  c4: { title: 'Seguir no Instagram', icon: 'instagram', kind: 'external' },
+  c5: { title: 'Correr 5 vezes', icon: 'run', kind: 'progress' },
+  c6: { title: 'Avaliar o app', icon: 'star', kind: 'review' },
+  c7: { title: 'Postar uma foto no feed', icon: 'image', kind: 'navigate', screen: 'Social' },
 };
+
+function challengeIconName(icon: ChallengeIcon) {
+  switch (icon) {
+    case 'watch':
+      return 'watch-outline';
+    case 'friend':
+      return 'person-add-outline';
+    case 'profile':
+      return 'camera-outline';
+    case 'instagram':
+      return 'logo-instagram';
+    case 'run':
+      return 'walk-outline';
+    case 'star':
+      return 'star-outline';
+    case 'image':
+      return 'image-outline';
+  }
+}
 
 function formatUnlockedAt(iso: string): string {
   return new Date(iso).toLocaleDateString('pt-BR', { day: '2-digit', month: 'short', year: 'numeric' });
@@ -43,12 +77,14 @@ export default function Progress() {
   const [activityType, setActivityType] = useState<ActivityType>('run');
   const [selectedBadge, setSelectedBadge] = useState<BadgeWithStatus | null>(null);
   const { featuredBadgeId, setFeaturedBadgeId } = useFeaturedBadge();
+  const [profile, setProfile] = useState<MyProfile | null>(null);
 
   const [summary, setSummary] = useState<ProgressSummary | null>(null);
   const [badgeStatuses, setBadgeStatuses] = useState<BadgeStatus[]>([]);
   const [challengeStatuses, setChallengeStatuses] = useState<ChallengeStatus[]>([]);
   const [rivals, setRivals] = useState<RivalEntryApi[]>([]);
   const [claimingId, setClaimingId] = useState<string | null>(null);
+  const [instagramOpened, setInstagramOpened] = useState<Record<string, boolean>>({});
 
   const loadAll = useCallback(
     async (type: ActivityType) => {
@@ -71,9 +107,18 @@ export default function Progress() {
     [authFetch]
   );
 
-  useEffect(() => {
-    loadAll(activityType);
-  }, [activityType, loadAll]);
+  // useFocusEffect (não useEffect): sem isso, voltar do AddFriend/
+  // EditProfile depois de completar um desafio não atualizava o status
+  // — a tela continuava mostrando "ainda não concluído" até fechar e
+  // reabrir o app inteiro.
+  useFocusEffect(
+    useCallback(() => {
+      loadAll(activityType);
+      authApi.me(authFetch).then(setProfile).catch(() => {
+        // cabeçalho funciona com o avatar genérico se isso falhar
+      });
+    }, [activityType, loadAll, authFetch])
+  );
 
   async function handleClaimChallenge(challengeId: string) {
     if (claimingId) return;
@@ -93,6 +138,75 @@ export default function Progress() {
     } finally {
       setClaimingId(null);
     }
+  }
+
+  // c4 (Instagram) e c6 (avaliação) são "honor system" — o backend não
+  // tem como confirmar de fora, então a confiança fica no próprio fluxo:
+  // primeiro toque abre o link/prompt nativo, só o segundo toque resgata.
+  async function handleChallengePress(challenge: ChallengeStatus, meta: (typeof CHALLENGE_META)[string]) {
+    if (challenge.claimed || claimingId) return;
+
+    if (meta.kind === 'external') {
+      if (!instagramOpened[challenge.id]) {
+        try {
+          const supported = await Linking.canOpenURL(INSTAGRAM_URL);
+          if (supported) await Linking.openURL(INSTAGRAM_URL);
+        } catch {
+          // segue o fluxo mesmo se o link falhar — não trava o resgate
+        }
+        setInstagramOpened((prev) => ({ ...prev, [challenge.id]: true }));
+        return;
+      }
+      handleClaimChallenge(challenge.id);
+      return;
+    }
+
+    if (meta.kind === 'review') {
+      try {
+        const available = await StoreReview.isAvailableAsync();
+        if (available) {
+          await StoreReview.requestReview();
+        } else {
+          Alert.alert('Ops', 'A avaliação não está disponível nesse dispositivo agora.');
+          return;
+        }
+      } catch {
+        // segue o fluxo mesmo se o prompt falhar — não trava o resgate
+      }
+      handleClaimChallenge(challenge.id);
+      return;
+    }
+
+    // kind === 'navigate' (c1, c2, c3, c7)
+    if (!challenge.completed) {
+      if (meta.screen) {
+        navigation.navigate(meta.screen as any);
+      } else {
+        Alert.alert(
+          'Ainda não disponível',
+          'A integração com relógios ainda não está pronta — assim que estiver, esse desafio libera sozinho.'
+        );
+      }
+      return;
+    }
+
+    handleClaimChallenge(challenge.id);
+  }
+
+  function challengeButtonLabel(challenge: ChallengeStatus, meta: (typeof CHALLENGE_META)[string]): string {
+    if (challenge.claimed) return 'RESGATADO';
+    if (claimingId === challenge.id) return 'RESGATANDO...';
+
+    if (meta.kind === 'external') {
+      return instagramOpened[challenge.id] ? 'JÁ SEGUI — RESGATAR' : 'SEGUIR NO INSTAGRAM';
+    }
+    if (meta.kind === 'review') {
+      return 'AVALIAR NA LOJA';
+    }
+    if (!challenge.completed) {
+      return meta.screen ? 'TOQUE PARA RESOLVER' : 'AINDA NÃO DISPONÍVEL';
+    }
+    return 'TOQUE PARA RESGATAR';
   }
 
   const level = summary?.level ?? 0;
@@ -118,7 +232,7 @@ export default function Progress() {
       {/* Barra de abas + atividade */}
       <View style={styles.topBar}>
         <TouchableOpacity onPress={() => navigation.navigate('Profile')}>
-          <Image source={{ uri: 'https://i.pravatar.cc/200?img=10' }} style={styles.avatar} />
+          <Image source={{ uri: profile?.avatarUrl || 'https://i.pravatar.cc/200?img=10' }} style={styles.avatar} />
         </TouchableOpacity>
 
         <ScrollView
@@ -214,6 +328,12 @@ export default function Progress() {
             {challengeStatuses.map((challenge) => {
               const meta = CHALLENGE_META[challenge.id];
               if (!meta) return null;
+
+              const showProgressBar = meta.kind === 'progress' && !challenge.completed;
+              const progressPct = showProgressBar
+                ? Math.min(((challenge.progress ?? 0) / (challenge.target ?? 1)) * 100, 100)
+                : 0;
+
               return (
                 <View key={challenge.id} style={styles.challengeCard}>
                   <View style={styles.claimBadge}>
@@ -221,36 +341,29 @@ export default function Progress() {
                   </View>
 
                   <View style={styles.challengeIconCircle}>
-                    <Ionicons
-                      name={
-                        meta.icon === 'watch'
-                          ? 'watch-outline'
-                          : meta.icon === 'friend'
-                          ? 'person-add-outline'
-                          : 'camera-outline'
-                      }
-                      size={24}
-                      color="#fff"
-                    />
+                    <Ionicons name={challengeIconName(meta.icon) as any} size={24} color="#fff" />
                   </View>
 
                   <Text style={styles.challengeTitle}>{meta.title}</Text>
 
-                  <TouchableOpacity
-                    style={styles.claimButton}
-                    onPress={() => handleClaimChallenge(challenge.id)}
-                    disabled={challenge.claimed || !challenge.completed || claimingId === challenge.id}
-                  >
-                    <Text style={styles.claimButtonText}>
-                      {challenge.claimed
-                        ? 'RESGATADO'
-                        : !challenge.completed
-                        ? 'AINDA NÃO CONCLUÍDO'
-                        : claimingId === challenge.id
-                        ? 'RESGATANDO...'
-                        : 'TOQUE PARA RESGATAR'}
-                    </Text>
-                  </TouchableOpacity>
+                  {showProgressBar ? (
+                    <View style={styles.progressBox}>
+                      <View style={styles.progressTrack}>
+                        <View style={[styles.progressFill, { width: `${progressPct}%` }]} />
+                      </View>
+                      <Text style={styles.progressText}>
+                        {challenge.progress ?? 0}/{challenge.target ?? 0} atividades
+                      </Text>
+                    </View>
+                  ) : (
+                    <TouchableOpacity
+                      style={styles.claimButton}
+                      onPress={() => handleChallengePress(challenge, meta)}
+                      disabled={challenge.claimed || claimingId === challenge.id}
+                    >
+                      <Text style={styles.claimButtonText}>{challengeButtonLabel(challenge, meta)}</Text>
+                    </TouchableOpacity>
+                  )}
                 </View>
               );
             })}

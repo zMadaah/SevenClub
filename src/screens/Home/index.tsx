@@ -60,7 +60,7 @@ export default function Home() {
 
   return (
     <View style={styles.container}>
-      <Map />
+      <Map activityType={activityMode === 'cycling' ? 'ride' : 'run'} />
 
       <Header
         avatar={profile?.avatarUrl ?? undefined}

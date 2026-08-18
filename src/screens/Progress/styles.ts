@@ -207,6 +207,26 @@ export const styles = StyleSheet.create({
     textAlign: 'center',
     marginBottom: 14,
   },
+  progressBox: {
+    width: '100%',
+  },
+  progressTrack: {
+    height: 6,
+    borderRadius: 3,
+    backgroundColor: 'rgba(188, 255, 0, 0.15)',
+    overflow: 'hidden',
+    marginBottom: 4,
+  },
+  progressFill: {
+    height: '100%',
+    backgroundColor: '#BCFF00',
+    borderRadius: 3,
+  },
+  progressText: {
+    fontSize: 10,
+    fontWeight: '700',
+    color: '#BCFF00',
+  },
   claimButton: {
     backgroundColor: 'rgba(188, 255, 0, 0.15)',
     paddingHorizontal: 12,

@@ -3,6 +3,8 @@ import { Modal, View, Text, TouchableOpacity, FlatList, ActivityIndicator } from
 import { Ionicons } from '@expo/vector-icons';
 
 import { SavedRoute } from '../../../types/route';
+import { useLocation } from '../../../hooks/useLocation';
+import RouteCard from './RouteCard';
 import { styles } from './styles';
 
 interface MyRoutesModalProps {
@@ -10,8 +12,9 @@ interface MyRoutesModalProps {
   onClose: () => void;
   routes: SavedRoute[];
   loading?: boolean;
-  onSelectRoute: (route: SavedRoute) => void;
+  onEditRoute: (route: SavedRoute) => void;
   onDeleteRoute: (id: string) => void;
+  onStartRoute: (route: SavedRoute) => void;
 }
 
 export default function MyRoutesModal({
@@ -19,9 +22,17 @@ export default function MyRoutesModal({
   onClose,
   routes,
   loading = false,
-  onSelectRoute,
+  onEditRoute,
   onDeleteRoute,
+  onStartRoute,
 }: MyRoutesModalProps) {
+  // Mesmo hook que ActivityStart já usa — busca a localização atual uma
+  // vez, pra calcular "a X km de distância" em cada cartão.
+  const { location } = useLocation();
+  const currentLocation = location
+    ? { latitude: location.coords.latitude, longitude: location.coords.longitude }
+    : null;
+
   return (
     <Modal visible={visible} transparent animationType="slide" onRequestClose={onClose}>
       <View style={styles.backdrop}>
@@ -47,33 +58,16 @@ export default function MyRoutesModal({
               data={routes}
               keyExtractor={(item) => item.id}
               style={styles.list}
-              ItemSeparatorComponent={() => <View style={styles.separator} />}
+              contentContainerStyle={{ paddingBottom: 12 }}
+              showsVerticalScrollIndicator={false}
               renderItem={({ item }) => (
-                <TouchableOpacity
-                  style={styles.routeRow}
-                  onPress={() => onSelectRoute(item)}
-                  activeOpacity={0.7}
-                >
-                  <View style={styles.routeIcon}>
-                    <Ionicons name="trail-sign-outline" size={18} color="#061414" />
-                  </View>
-
-                  <View style={styles.routeInfo}>
-                    <Text style={styles.routeName}>{item.name}</Text>
-                    <Text style={styles.routeMeta}>
-                      {(item.distanceMeters / 1000).toFixed(2)} km
-                      {item.captureM2 > 0 ? ` · ${Math.round(item.captureM2)} m² capturados` : ''}
-                    </Text>
-                  </View>
-
-                  <TouchableOpacity
-                    onPress={() => onDeleteRoute(item.id)}
-                    hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
-                    style={styles.deleteButton}
-                  >
-                    <Ionicons name="trash-outline" size={18} color="#D85A30" />
-                  </TouchableOpacity>
-                </TouchableOpacity>
+                <RouteCard
+                  route={item}
+                  currentLocation={currentLocation}
+                  onEdit={() => onEditRoute(item)}
+                  onDelete={() => onDeleteRoute(item.id)}
+                  onStart={() => onStartRoute(item)}
+                />
               )}
             />
           )}
