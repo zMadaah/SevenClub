@@ -1,7 +1,7 @@
 {
   "expo": {
     "name": "Seven Club",
-    "slug": "Seven Club",
+    "slug": "seven-club",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/seven.jpg",
