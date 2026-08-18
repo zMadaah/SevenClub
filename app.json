@@ -14,8 +14,11 @@
     },
     "ios": {
       "supportsTablet": true,
+      "bundleIdentifier": "com.sevenclub.app",
       "infoPlist": {
-        "NSLocationWhenInUseUsageDescription": "O Seven Club usa sua localização para registrar suas corridas, rotas e distância percorrida."
+        "NSLocationWhenInUseUsageDescription": "O Seven Club usa sua localização para registrar suas corridas, rotas e distância percorrida.",
+        "NSPhotoLibraryUsageDescription": "O Seven Club acessa suas fotos para você escolher uma imagem de perfil ou de fundo ao compartilhar uma atividade.",
+        "NSPhotoLibraryAddUsageDescription": "O Seven Club salva na sua galeria a imagem gerada ao compartilhar uma atividade."
       }
     },
     "android": {
@@ -28,18 +31,24 @@
       "navigationBarColor": "#061414",
       "permissions": [
         "ACCESS_FINE_LOCATION",
-        "ACCESS_COARSE_LOCATION",
-        "ACCESS_FINE_LOCATION",
         "ACCESS_COARSE_LOCATION"
       ],
-      "package": "com.anonymous.SevenClub"
+      "package": "com.sevenclub.app"
     },
     "web": {
       "favicon": "./assets/seven.jpg"
     },
     "plugins": [
       "@react-native-community/datetimepicker",
-      "expo-secure-store"
+      "expo-secure-store",
+      [
+        "expo-media-library",
+        {
+          "photosPermission": "O Seven Club acessa suas fotos para você escolher uma imagem de perfil ou de fundo ao compartilhar uma atividade.",
+          "savePhotosPermission": "O Seven Club salva na sua galeria a imagem gerada ao compartilhar uma atividade.",
+          "isAccessMediaLocationEnabled": false
+        }
+      ]
     ]
   }
 }
