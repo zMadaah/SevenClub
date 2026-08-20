@@ -176,6 +176,7 @@ export const styles = StyleSheet.create({
     paddingVertical: 16,
     borderRadius: 28,
     alignItems: 'center',
+    marginBottom:20
   },
   saveButtonDisabled: {
     backgroundColor: '#EDEDED',

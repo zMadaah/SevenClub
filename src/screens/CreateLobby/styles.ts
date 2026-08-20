@@ -24,6 +24,7 @@ export const styles = StyleSheet.create({
     fontWeight: '700',
     letterSpacing: 1,
     color: '#111',
+    
   },
   content: {
     paddingHorizontal: 20,
@@ -107,6 +108,7 @@ export const styles = StyleSheet.create({
     paddingVertical: 18,
     borderRadius: 30,
     alignItems: 'center',
+    marginBottom:20
   },
   createButtonDisabled: {
     backgroundColor: '#E5E5E5',

@@ -72,13 +72,13 @@ export default function ReferralCode() {
 
     return (
         <View style={styles.container}>
-            <Svg style={styles.decoration} viewBox="0 0 375 812">
+            {/* <Svg style={styles.decoration} viewBox="0 0 375 812">
                 <Path d="M60 55 C 140 -20, 280 -10, 340 60" stroke={colors.accent} strokeWidth={2} fill="none" />
                 <Path d="M330 260 L 320 350" stroke={colors.accent} strokeWidth={2} fill="none" />
                 <Path d="M-20 500 C 40 620, 120 700, 260 630" stroke={colors.accent} strokeWidth={2} fill="none" />
                 <Path d="M100 600 L 340 700" stroke={colors.accent} strokeWidth={2} fill="none" />
                 <Path d="M0 780 C 120 850, 220 830, 260 730" stroke={colors.accent} strokeWidth={2} fill="none" />
-            </Svg>
+            </Svg> */}
 
             <TouchableOpacity style={styles.backButton} onPress={() => navigation.goBack()}>
                 <Ionicons name="chevron-back" size={20} color={colors.textPrimary} />
