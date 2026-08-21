@@ -1,10 +1,11 @@
-import React, { useMemo, useState } from 'react';
-import { View, Text, TouchableOpacity, FlatList, ScrollView } from 'react-native';
+import React, { useCallback, useMemo, useState } from 'react';
+import { View, Text, TouchableOpacity, FlatList, ScrollView, ActivityIndicator, Alert } from 'react-native';
 import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
-import { useNavigation } from '@react-navigation/native';
+import { useNavigation, useFocusEffect } from '@react-navigation/native';
 
-import { MOCK_NOTIFICATIONS } from '../../services/mock/notification';
-import { NotificationCategory, NotificationItem } from '../../types/notification';
+import { useAuth } from '../../contexts/AuthContext';
+import { authApi, ApiError, NotificationItemApi } from '../../services/api';
+import { NotificationCategory } from '../../types/notification';
 import { colors } from '../../theme/colors';
 import { styles } from './styles';
 
@@ -27,8 +28,23 @@ const CATEGORY_ICON: Record<NotificationCategory, { name: string; lib: 'ionicons
 
 export default function Notifications() {
   const navigation = useNavigation();
+  const { authFetch } = useAuth();
   const [filter, setFilter] = useState<FilterKey>('all');
-  const [items, setItems] = useState<NotificationItem[]>(MOCK_NOTIFICATIONS);
+  const [items, setItems] = useState<NotificationItemApi[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useFocusEffect(
+    useCallback(() => {
+      authApi
+        .getNotifications(authFetch)
+        .then(setItems)
+        .catch((err) => {
+          const message = err instanceof ApiError ? err.message : 'Não foi possível carregar as notificações.';
+          Alert.alert('Ops', message);
+        })
+        .finally(() => setLoading(false));
+    }, [authFetch])
+  );
 
   const filteredItems = useMemo(() => {
     if (filter === 'all') return items;
@@ -36,9 +52,11 @@ export default function Notifications() {
   }, [items, filter]);
 
   function handlePressItem(id: string) {
-    setItems((prev) =>
-      prev.map((item) => (item.id === id ? { ...item, read: true } : item))
-    );
+    setItems((prev) => prev.map((item) => (item.id === id ? { ...item, read: true } : item)));
+    authApi.markNotificationRead(authFetch, id).catch(() => {
+      // marcar como lida é um detalhe — uma falha aqui não precisa
+      // reverter o estado visual nem travar a tela com alerta
+    });
   }
 
   return (
@@ -71,7 +89,11 @@ export default function Notifications() {
         })}
       </ScrollView>
 
-      {filteredItems.length === 0 ? (
+      {loading ? (
+        <View style={styles.emptyState}>
+          <ActivityIndicator color={colors.textPrimary} />
+        </View>
+      ) : filteredItems.length === 0 ? (
         <View style={styles.emptyState}>
           <Ionicons name="notifications-off-outline" size={28} color={colors.textMuted} />
           <Text style={styles.emptyText}>Nada por aqui ainda</Text>

@@ -294,6 +294,15 @@ export interface TerritoryCellView {
   boundary: { latitude: number; longitude: number }[];
 }
 
+export interface NotificationItemApi {
+  id: string;
+  category: 'territory' | 'invite' | 'community' | 'sevenclub';
+  title: string;
+  subtitle: string;
+  timeAgo: string;
+  read: boolean;
+}
+
 export interface LobbyChatMessageApi {
   id: string;
   senderId: string;
@@ -522,6 +531,12 @@ export const authApi = {
       method: 'POST',
       body: JSON.stringify({ token }),
     }),
+
+  getNotifications: (authFetch: AuthFetch) =>
+    authFetch<NotificationItemApi[]>('/notifications'),
+
+  markNotificationRead: (authFetch: AuthFetch, id: string) =>
+    authFetch<void>(`/notifications/${id}/read`, { method: 'PATCH' }),
 
   getTerritoryCells: (
     authFetch: AuthFetch,
