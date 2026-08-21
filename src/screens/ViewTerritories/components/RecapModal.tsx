@@ -1,9 +1,10 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { Modal, View, Text, TouchableOpacity, Share } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import MapView, { Polyline } from 'react-native-maps';
+import { Map, Camera, GeoJSONSource, Layer, CameraRef } from '@maplibre/maplibre-react-native';
+import type { Feature, LineString } from 'geojson';
 
-import { darkMapStyle } from '../../../Map/darkMapStyle';
+import { MAP_STYLE_URL_DARK } from '../../../config/mapStyle';
 import { getPathState } from '../../../utils/geo';
 import { formatDuration } from '../../../utils/time';
 import { TerritoryEntry } from '../../../types/territory';
@@ -30,7 +31,7 @@ function parseDurationToSeconds(label: string): number {
 }
 
 export default function RecapModal({ visible, onClose, territory }: RecapModalProps) {
-  const mapRef = useRef<MapView>(null);
+  const cameraRef = useRef<CameraRef>(null);
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
   const [progress, setProgress] = useState(0);
@@ -82,17 +83,16 @@ export default function RecapModal({ visible, onClose, territory }: RecapModalPr
     [territory.points, progress]
   );
 
+  // heading (react-native-maps) → bearing (MapLibre), mesmo conceito
   useEffect(() => {
     if (!visible || finished) return;
-    mapRef.current?.animateCamera(
-      {
-        center: pathState.current,
-        pitch: 60,
-        heading: pathState.heading,
-        zoom: 17,
-      },
-      { duration: TICK_MS }
-    );
+    cameraRef.current?.easeTo({
+      center: [pathState.current.longitude, pathState.current.latitude],
+      pitch: 60,
+      bearing: pathState.heading,
+      zoom: 17,
+      duration: TICK_MS,
+    });
   }, [pathState, visible, finished]);
 
   function handleTogglePlay() {
@@ -132,30 +132,38 @@ export default function RecapModal({ visible, onClose, territory }: RecapModalPr
   const distanceSoFar = territory.distanceKm * progress;
   const secondsSoFar = totalSeconds * progress;
 
+  const revealedFeature: Feature<LineString> = {
+    type: 'Feature',
+    properties: {},
+    geometry: {
+      type: 'LineString',
+      coordinates: pathState.revealedPoints.map((p) => [p.longitude, p.latitude] as [number, number]),
+    },
+  };
+
   return (
     <Modal visible={visible} animationType="slide" onRequestClose={onClose}>
       <View style={styles.container}>
-        <MapView
-          ref={mapRef}
+        <Map
           style={styles.map}
-          customMapStyle={darkMapStyle}
-          initialRegion={{
-            latitude: territory.points[0].latitude,
-            longitude: territory.points[0].longitude,
-            latitudeDelta: 0.01,
-            longitudeDelta: 0.01,
-          }}
-          scrollEnabled={false}
-          zoomEnabled={false}
-          rotateEnabled={false}
-          pitchEnabled={false}
+          mapStyle={MAP_STYLE_URL_DARK}
+          dragPan={false}
+          touchZoom={false}
+          touchRotate={false}
+          touchPitch={false}
         >
-          <Polyline
-            coordinates={pathState.revealedPoints}
-            strokeColor={colors.accent}
-            strokeWidth={4}
+          <Camera
+            ref={cameraRef}
+            initialViewState={{
+              center: [territory.points[0].longitude, territory.points[0].latitude],
+              zoom: 17,
+            }}
           />
-        </MapView>
+
+          <GeoJSONSource id="recap-track" data={revealedFeature}>
+            <Layer id="recap-track-line" type="line" style={{ lineColor: colors.accent, lineWidth: 4 }} />
+          </GeoJSONSource>
+        </Map>
 
         <TouchableOpacity
           style={styles.closeButton}

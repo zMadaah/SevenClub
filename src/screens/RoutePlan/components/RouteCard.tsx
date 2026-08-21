@@ -1,10 +1,12 @@
 import React from 'react';
 import { View, Text, TouchableOpacity } from 'react-native';
-import MapView, { Polygon, LatLng } from 'react-native-maps';
+import { Map, Camera, GeoJSONSource, Layer } from '@maplibre/maplibre-react-native';
+import type { Feature, Polygon as GeoJSONPolygon } from 'geojson';
 import { Ionicons } from '@expo/vector-icons';
 
 import { SavedRoute } from '../../../types/route';
-import { haversineDistance } from '../../../utils/geo';
+import { LatLng, haversineDistance } from '../../../utils/geo';
+import { MAP_STYLE_URL } from '../../../config/mapStyle';
 import { styles } from './RouteCard.styles';
 
 interface RouteCardProps {
@@ -15,23 +17,17 @@ interface RouteCardProps {
   onStart: () => void;
 }
 
-function regionForPoints(points: LatLng[]) {
+// Limites (não mais "region com delta") que enquadram o traçado na
+// miniatura — formato [west, south, east, north], que é o que o
+// MapLibre espera pra `bounds`.
+function boundsForPoints(points: LatLng[]): [number, number, number, number] {
   const lats = points.map((p) => p.latitude);
   const lngs = points.map((p) => p.longitude);
   const minLat = Math.min(...lats);
   const maxLat = Math.max(...lats);
   const minLng = Math.min(...lngs);
   const maxLng = Math.max(...lngs);
-
-  return {
-    latitude: (minLat + maxLat) / 2,
-    longitude: (minLng + maxLng) / 2,
-    // *1.5 dá uma margem em volta do traçado, pra ele não colar na borda
-    // da miniatura — || 0.01 cobre o caso raro de todos os pontos
-    // ficarem exatamente no mesmo lugar (delta zero quebraria o mapa)
-    latitudeDelta: (maxLat - minLat) * 1.5 || 0.01,
-    longitudeDelta: (maxLng - minLng) * 1.5 || 0.01,
-  };
+  return [minLng, minLat, maxLng, maxLat];
 }
 
 function formatDistance(meters: number): string {
@@ -45,6 +41,15 @@ function formatCreatedAt(timestamp: number): string {
 
 export default function RouteCard({ route, currentLocation, onEdit, onDelete, onStart }: RouteCardProps) {
   const awayMeters = currentLocation ? haversineDistance(currentLocation, route.points[0]) : null;
+
+  const routeFeature: Feature<GeoJSONPolygon> = {
+    type: 'Feature',
+    properties: {},
+    geometry: {
+      type: 'Polygon',
+      coordinates: [route.points.map((p) => [p.longitude, p.latitude] as [number, number])],
+    },
+  };
 
   return (
     <View style={styles.card}>
@@ -61,23 +66,28 @@ export default function RouteCard({ route, currentLocation, onEdit, onDelete, on
           )}
         </View>
 
-        <View style={styles.thumbnailBox}>
-          <MapView
-            style={styles.thumbnail}
-            initialRegion={regionForPoints(route.points)}
-            scrollEnabled={false}
-            zoomEnabled={false}
-            rotateEnabled={false}
-            pitchEnabled={false}
-            pointerEvents="none"
-          >
-            <Polygon
-              coordinates={route.points}
-              strokeColor="#BCFF00"
-              fillColor="rgba(188, 255, 0, 0.25)"
-              strokeWidth={2}
+        <View style={styles.thumbnailBox} pointerEvents="none">
+          <Map style={styles.thumbnail} mapStyle={MAP_STYLE_URL} dragPan={false} touchZoom={false}>
+            <Camera
+              initialViewState={{
+                bounds: boundsForPoints(route.points),
+                padding: { top: 12, bottom: 12, left: 12, right: 12 },
+              }}
             />
-          </MapView>
+
+            <GeoJSONSource id={`route-${route.id}`} data={routeFeature}>
+              <Layer
+                id={`route-${route.id}-fill`}
+                type="fill"
+                style={{ fillColor: 'rgba(188, 255, 0, 0.25)' }}
+              />
+              <Layer
+                id={`route-${route.id}-stroke`}
+                type="line"
+                style={{ lineColor: '#BCFF00', lineWidth: 2 }}
+              />
+            </GeoJSONSource>
+          </Map>
         </View>
       </View>
 

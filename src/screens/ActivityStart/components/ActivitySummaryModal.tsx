@@ -1,8 +1,11 @@
-import React, { useEffect, useRef } from 'react';
+import React from 'react';
 import { Modal, View, Text, TextInput, TouchableOpacity } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import MapView, { Polygon, Polyline, LatLng } from 'react-native-maps';
+import { Map, Camera, GeoJSONSource, Layer } from '@maplibre/maplibre-react-native';
+import type { Feature, LineString, Polygon as GeoJSONPolygon } from 'geojson';
 
+import { LatLng } from '../../../utils/geo';
+import { MAP_STYLE_URL } from '../../../config/mapStyle';
 import { styles } from './ActivitySummaryModal.styles';
 
 interface ActivitySummaryModalProps {
@@ -20,6 +23,12 @@ interface ActivitySummaryModalProps {
   saving: boolean;
 }
 
+function boundsForPoints(points: LatLng[]): [number, number, number, number] {
+  const lats = points.map((p) => p.latitude);
+  const lngs = points.map((p) => p.longitude);
+  return [Math.min(...lngs), Math.min(...lats), Math.max(...lngs), Math.max(...lats)];
+}
+
 export default function ActivitySummaryModal({
   visible,
   onClose,
@@ -34,22 +43,19 @@ export default function ActivitySummaryModal({
   onChangeActivityName,
   saving,
 }: ActivitySummaryModalProps) {
-  const mapRef = useRef<MapView>(null);
-
-  useEffect(() => {
-    if (visible && points.length > 1) {
-      const timeout = setTimeout(() => {
-        mapRef.current?.fitToCoordinates(points, {
-          edgePadding: { top: 30, right: 30, bottom: 30, left: 30 },
-          animated: false,
-        });
-      }, 150);
-      return () => clearTimeout(timeout);
-    }
-  }, [visible, points]);
-
   const km = (distanceMeters / 1000).toFixed(2);
   const canSave = activityName.trim().length > 0 && !saving;
+
+  const trackFeature: Feature<GeoJSONPolygon | LineString> | null =
+    points.length > 1
+      ? {
+          type: 'Feature',
+          properties: {},
+          geometry: loopClosed
+            ? { type: 'Polygon', coordinates: [points.map((p) => [p.longitude, p.latitude] as [number, number])] }
+            : { type: 'LineString', coordinates: points.map((p) => [p.longitude, p.latitude] as [number, number]) },
+        }
+      : null;
 
   return (
     <Modal visible={visible} transparent animationType="slide" onRequestClose={onClose}>
@@ -63,32 +69,33 @@ export default function ActivitySummaryModal({
           </View>
 
           <View style={styles.mapPreview}>
-            {points.length > 1 && (
-              <MapView
-                ref={mapRef}
+            {trackFeature && (
+              <Map
                 style={styles.mapPreviewInner}
-                scrollEnabled={false}
-                zoomEnabled={false}
-                rotateEnabled={false}
-                pitchEnabled={false}
-                initialRegion={{
-                  latitude: points[0].latitude,
-                  longitude: points[0].longitude,
-                  latitudeDelta: 0.01,
-                  longitudeDelta: 0.01,
-                }}
+                mapStyle={MAP_STYLE_URL}
+                dragPan={false}
+                touchZoom={false}
+                touchRotate={false}
+                touchPitch={false}
               >
-                {loopClosed ? (
-                  <Polygon
-                    coordinates={points}
-                    fillColor="rgba(188, 255, 0, 0.25)"
-                    strokeColor="#BCFF00"
-                    strokeWidth={3}
-                  />
-                ) : (
-                  <Polyline coordinates={points} strokeColor="#BCFF00" strokeWidth={4} />
-                )}
-              </MapView>
+                <Camera
+                  initialViewState={{
+                    bounds: boundsForPoints(points),
+                    padding: { top: 30, right: 30, bottom: 30, left: 30 },
+                  }}
+                />
+
+                <GeoJSONSource id="activity-track" data={trackFeature}>
+                  {loopClosed ? (
+                    <>
+                      <Layer id="activity-track-fill" type="fill" style={{ fillColor: 'rgba(188, 255, 0, 0.25)' }} />
+                      <Layer id="activity-track-stroke" type="line" style={{ lineColor: '#BCFF00', lineWidth: 3 }} />
+                    </>
+                  ) : (
+                    <Layer id="activity-track-line" type="line" style={{ lineColor: '#BCFF00', lineWidth: 4 }} />
+                  )}
+                </GeoJSONSource>
+              </Map>
             )}
           </View>
 

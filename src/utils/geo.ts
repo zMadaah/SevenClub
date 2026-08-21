@@ -1,4 +1,11 @@
-import { LatLng } from 'react-native-maps';
+// Tipo próprio — desacoplado de qualquer biblioteca de mapa específica.
+// Antes vinha de 'react-native-maps'; a migração pro MapLibre não deveria
+// obrigar todo tipo/util que só lida com coordenadas a saber qual lib de
+// mapa está em uso por trás.
+export interface LatLng {
+  latitude: number;
+  longitude: number;
+}
 
 const EARTH_RADIUS_M = 6371000;
 const toRad = (deg: number) => (deg * Math.PI) / 180;

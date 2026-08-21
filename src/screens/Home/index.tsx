@@ -29,6 +29,7 @@ export default function Home() {
   const [lobbyModalVisible, setLobbyModalVisible] = useState(false);
   const { authFetch, userId } = useAuth();
   const [profile, setProfile] = useState<MyProfile | null>(null);
+  const [territoryLabel, setTerritoryLabel] = useState('0,00 km²');
   const { refreshLobbies } = useMyLobbies();
 
   // Sem isso, "activeLobby" nasce null toda vez que o app abre — mesmo o
@@ -46,7 +47,10 @@ export default function Home() {
 
   // useFocusEffect (não useEffect): a Home fica montada o tempo todo por
   // trás de outras telas — sem isso, editar a foto em EditProfile e
-  // voltar pra Home não atualizava o avatar do cabeçalho.
+  // voltar pra Home não atualizava o avatar do cabeçalho. Mesma lógica
+  // vale pro território: sem isso, terminar uma atividade e voltar pra
+  // Home nunca atualizava o "0,00 km²" que ficava parado desde sempre —
+  // na real, essa prop nunca tinha sido conectada a dado nenhum antes.
   useFocusEffect(
     useCallback(() => {
       authApi
@@ -55,12 +59,23 @@ export default function Home() {
         .catch(() => {
           // cabeçalho funciona com o avatar genérico se isso falhar
         });
-    }, [authFetch])
+
+      const type = activityMode === 'cycling' ? 'ride' : 'run';
+      authApi
+        .getProgressSummary(authFetch, type)
+        .then((summary) => {
+          const km2 = summary.territoryM2 / 1_000_000;
+          setTerritoryLabel(`${km2.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} km²`);
+        })
+        .catch(() => {
+          // mapa funciona com o placeholder se isso falhar
+        });
+    }, [authFetch, activityMode])
   );
 
   return (
     <View style={styles.container}>
-      <Map activityType={activityMode === 'cycling' ? 'ride' : 'run'} />
+      <Map activityType={activityMode === 'cycling' ? 'ride' : 'run'} territory={territoryLabel} />
 
       <Header
         avatar={profile?.avatarUrl ?? undefined}

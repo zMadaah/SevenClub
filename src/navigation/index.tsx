@@ -53,6 +53,7 @@ import { RootStackParamList } from './types';
 import { ActiveLobbyProvider } from '../contexts/ActiveLobbyContext';
 import { SavedRoutesProvider } from '../contexts/SavedRoutesContext';
 import { AuthProvider, useAuth } from '../contexts/AuthContext';
+import { usePushNotifications } from '../hooks/usePushNotifications';
 import { ActiveCrewProvider } from '../contexts/ActiveCrewContext';
 import { FeaturedBadgeProvider } from '../contexts/FeaturedBadgeContext';
 import { GameModeProvider } from '../contexts/GameModeContext';
@@ -63,6 +64,7 @@ const Stack = createNativeStackNavigator<RootStackParamList>();
 
 function RootNavigator() {
   const { isAuthenticated, isRestoring } = useAuth();
+  usePushNotifications();
 
   // Enquanto tenta restaurar a sessão salva (SecureStore + refresh),
   // não decide ainda entre pilha logada ou pilha de login — evita um

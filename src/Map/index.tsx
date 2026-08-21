@@ -1,14 +1,24 @@
-import React, { forwardRef, useCallback, useEffect, useImperativeHandle, useRef, useState } from 'react';
-import { View, Text, PanResponder } from 'react-native';
-import MapView, { Polyline, Polygon, Marker, LatLng, Region } from 'react-native-maps';
+import React, { forwardRef, useCallback, useEffect, useImperativeHandle, useMemo, useRef, useState } from 'react';
+import { View, Text, PanResponder, NativeSyntheticEvent } from 'react-native';
+import {
+  Map,
+  Camera,
+  GeoJSONSource,
+  Layer,
+  Marker,
+  MapRef,
+  CameraRef,
+  ViewStateChangeEvent,
+} from '@maplibre/maplibre-react-native';
+import type { Feature, FeatureCollection, LineString, Polygon as GeoJSONPolygon } from 'geojson';
 
 import { styles } from './styles';
 import { useLocation } from '../hooks/useLocation';
-import { isLoopClosed } from '../utils/geo';
+import { isLoopClosed, LatLng } from '../utils/geo';
 import { useAuth } from '../contexts/AuthContext';
 import { authApi, TerritoryCellView } from '../services/api';
+import { MAP_STYLE_URL } from '../config/mapStyle';
 
-import UserLocation from './components/UserLocation';
 import FloatingControls from './components/FloatingControls';
 import MapControls from './components/MapControls';
 
@@ -39,6 +49,19 @@ interface MapProps {
 // pontos demais (e travar) enquanto o dedo desliza pelo mapa
 const SAMPLE_MIN_DISTANCE_PX = 6;
 
+// MapLibre usa coordenadas [longitude, latitude] (array, padrão GeoJSON)
+// — o resto do app inteiro usa {latitude, longitude} (era o padrão do
+// react-native-maps). Em vez de espalhar esse detalhe por todo lugar,
+// só esse arquivo (que fala com a lib de mapa diretamente) faz a
+// conversão nas duas pontas.
+function toLngLat(p: LatLng): [number, number] {
+  return [p.longitude, p.latitude];
+}
+
+function toLngLatList(points: LatLng[]): [number, number][] {
+  return points.map(toLngLat);
+}
+
 function MapComponent(
   {
     drawable = false,
@@ -52,7 +75,8 @@ function MapComponent(
   }: MapProps,
   ref: React.Ref<MapHandle>
 ) {
-  const mapRef = useRef<MapView>(null);
+  const mapRef = useRef<MapRef>(null);
+  const cameraRef = useRef<CameraRef>(null);
   const { location, permission } = useLocation();
   const { authFetch, userId } = useAuth();
 
@@ -88,8 +112,9 @@ function MapComponent(
     if (isConverting.current) return; // já tem uma conversão em andamento, descarta essa amostra
     isConverting.current = true;
     try {
-      const coordinate = await mapRef.current?.coordinateForPoint({ x, y });
-      if (coordinate) onMapPressRef.current?.(coordinate);
+      // unproject devolve [longitude, latitude] direto
+      const coordinate = await mapRef.current?.unproject([x, y]);
+      if (coordinate) onMapPressRef.current?.({ longitude: coordinate[0], latitude: coordinate[1] });
     } finally {
       isConverting.current = false;
     }
@@ -114,16 +139,11 @@ function MapComponent(
 
   const handleCenterMap = () => {
     if (!location) return;
-    mapRef.current?.animateCamera(
-      {
-        center: {
-          latitude: location.coords.latitude,
-          longitude: location.coords.longitude,
-        },
-        zoom: 17,
-      },
-      { duration: 500 }
-    );
+    cameraRef.current?.easeTo({
+      center: [location.coords.longitude, location.coords.latitude],
+      zoom: 17,
+      duration: 500,
+    });
   };
 
   useImperativeHandle(ref, () => ({ centerOnUser: handleCenterMap }));
@@ -133,24 +153,20 @@ function MapComponent(
   // chamada nova. Só busca com zoom "de perto o bastante pra hexágono
   // fazer sentido" — muito afastado, LIMIT 3000 do backend cortaria os
   // dados de qualquer jeito e a tela ficaria poluída.
-  const handleRegionChangeComplete = useCallback(
-    (region: Region) => {
+  const fetchTerritoryForBounds = useCallback(
+    (bounds: { minLat: number; maxLat: number; minLng: number; maxLng: number }) => {
       if (!showTerritory) return;
       if (fetchTimeoutRef.current) clearTimeout(fetchTimeoutRef.current);
 
-      if (region.latitudeDelta > 0.05) {
+      const latSpan = bounds.maxLat - bounds.minLat;
+      if (latSpan > 0.05) {
         setTerritoryCells([]);
         return;
       }
 
       fetchTimeoutRef.current = setTimeout(() => {
         authApi
-          .getTerritoryCells(authFetch, activityType, {
-            minLat: region.latitude - region.latitudeDelta / 2,
-            maxLat: region.latitude + region.latitudeDelta / 2,
-            minLng: region.longitude - region.longitudeDelta / 2,
-            maxLng: region.longitude + region.longitudeDelta / 2,
-          })
+          .getTerritoryCells(authFetch, activityType, bounds)
           .then(setTerritoryCells)
           .catch(() => {
             // território é uma camada visual — uma falha aqui não deveria
@@ -161,24 +177,86 @@ function MapComponent(
     [authFetch, activityType, showTerritory]
   );
 
-  // onRegionChangeComplete do MapView nem sempre dispara sozinho no
-  // primeiro carregamento — sem isso, o mapa abriria sem nenhum
-  // hexágono desenhado até a pessoa arrastar o dedo pela primeira vez.
+  // onRegionDidChange já traz os limites visíveis dentro do próprio
+  // evento (event.bounds = [west, south, east, north]) — não precisa de
+  // uma segunda chamada assíncrona pra buscar isso à parte.
+  const handleRegionDidChange = useCallback(
+    (event: NativeSyntheticEvent<ViewStateChangeEvent>) => {
+      const [west, south, east, north] = event.nativeEvent.bounds;
+      fetchTerritoryForBounds({ minLat: south, maxLat: north, minLng: west, maxLng: east });
+    },
+    [fetchTerritoryForBounds]
+  );
+
+  // Busca inicial assim que a localização carrega — onRegionDidChange só
+  // dispara depois que o mapa já está pronto e o usuário interage (ou
+  // no fim do carregamento inicial), então isso cobre o primeiro frame.
   useEffect(() => {
     if (!location) return;
-    handleRegionChangeComplete({
-      latitude: location.coords.latitude,
-      longitude: location.coords.longitude,
-      latitudeDelta: 0.005,
-      longitudeDelta: 0.005,
+    const d = 0.0025; // metade do "latitudeDelta" que já usávamos (0.005)
+    fetchTerritoryForBounds({
+      minLat: location.coords.latitude - d,
+      maxLat: location.coords.latitude + d,
+      minLng: location.coords.longitude - d,
+      maxLng: location.coords.longitude + d,
     });
-  }, [location, handleRegionChangeComplete]);
+  }, [location, fetchTerritoryForBounds]);
 
   useEffect(() => {
     return () => {
       if (fetchTimeoutRef.current) clearTimeout(fetchTimeoutRef.current);
     };
   }, []);
+
+  // Um único GeoJSONSource com TODAS as células de território como
+  // features — MUITO mais leve que criar uma fonte nativa por hexágono
+  // (que pode ser centenas). A cor de cada uma vem de uma propriedade
+  // lida pela camada via expressão ['get', ...], não de um source por
+  // célula.
+  const territoryFeatureCollection = useMemo<FeatureCollection<GeoJSONPolygon>>(
+    () => ({
+      type: 'FeatureCollection',
+      features: territoryCells.map((cell) => ({
+        type: 'Feature',
+        properties: {
+          fillColor: cell.isMine ? 'rgba(188, 255, 0, 0.35)' : `${cell.ownerColor}59`,
+          strokeColor: cell.isMine ? '#BCFF00' : cell.ownerColor,
+        },
+        geometry: {
+          type: 'Polygon',
+          coordinates: [toLngLatList(cell.boundary)],
+        },
+      })),
+    }),
+    [territoryCells]
+  );
+
+  const loopClosed = isLoopClosed(points);
+
+  const referenceRouteFeature = useMemo<Feature<LineString> | null>(() => {
+    if (!referenceRoute || referenceRoute.length < 2) return null;
+    return {
+      type: 'Feature',
+      properties: {},
+      geometry: { type: 'LineString', coordinates: toLngLatList(referenceRoute) },
+    };
+  }, [referenceRoute]);
+
+  const liveTrackFeature = useMemo<Feature<GeoJSONPolygon | LineString> | null>(() => {
+    if (points.length === 0) return null;
+    if (loopClosed) {
+      return {
+        type: 'Feature',
+        properties: {},
+        geometry: { type: 'Polygon', coordinates: [toLngLatList(points)] },
+      };
+    }
+    return {
+      type: 'Feature',
+      properties: {},
+      geometry: { type: 'LineString', coordinates: toLngLatList(points) },
+    };
+  }, [points, loopClosed]);
 
   if (!permission) {
     return (
@@ -196,64 +274,72 @@ function MapComponent(
     );
   }
 
-  const loopClosed = isLoopClosed(points);
-
   return (
     <View style={styles.container}>
-      <MapView
+      <Map
         ref={mapRef}
         style={styles.map}
-        initialRegion={{
-          latitude: location.coords.latitude,
-          longitude: location.coords.longitude,
-          latitudeDelta: 0.005,
-          longitudeDelta: 0.005,
-        }}
-        showsUserLocation={false}
-        showsMyLocationButton={false}
-        scrollEnabled={!drawable}
-        zoomEnabled={!drawable}
-        rotateEnabled={!drawable}
-        pitchEnabled={!drawable}
-        onRegionChangeComplete={handleRegionChangeComplete}
+        mapStyle={MAP_STYLE_URL}
+        dragPan={!drawable}
+        touchZoom={!drawable}
+        touchRotate={!drawable}
+        touchPitch={!drawable}
+        onRegionDidChange={handleRegionDidChange}
       >
-        <UserLocation
-          latitude={location.coords.latitude}
-          longitude={location.coords.longitude}
+        <Camera
+          ref={cameraRef}
+          initialViewState={{
+            center: [location.coords.longitude, location.coords.latitude],
+            zoom: 17,
+          }}
         />
 
-        {territoryCells.map((cell) => (
-          <Polygon
-            key={cell.h3Index}
-            coordinates={cell.boundary}
-            fillColor={cell.isMine ? 'rgba(188, 255, 0, 0.35)' : `${cell.ownerColor}59`}
-            strokeColor={cell.isMine ? '#BCFF00' : cell.ownerColor}
-            strokeWidth={1}
-          />
-        ))}
+        <Marker lngLat={[location.coords.longitude, location.coords.latitude]}>
+          <View style={styles.userDot} />
+        </Marker>
 
-        {referenceRoute && referenceRoute.length > 1 && (
-          <Polyline
-            coordinates={referenceRoute}
-            strokeColor="rgba(188, 255, 0, 0.45)"
-            strokeWidth={4}
-            lineDashPattern={[8, 6]}
-          />
+        {territoryCells.length > 0 && (
+          <GeoJSONSource id="territory-cells" data={territoryFeatureCollection}>
+            <Layer id="territory-fill" type="fill" style={{ fillColor: ['get', 'fillColor'] }} />
+            <Layer
+              id="territory-stroke"
+              type="line"
+              style={{ lineColor: ['get', 'strokeColor'], lineWidth: 1 }}
+            />
+          </GeoJSONSource>
         )}
 
-        {points.length > 0 && loopClosed && (
-          <Polygon
-            coordinates={points}
-            fillColor="rgba(188, 255, 0, 0.25)"
-            strokeColor="#BCFF00"
-            strokeWidth={3}
-          />
+        {referenceRouteFeature && (
+          <GeoJSONSource id="reference-route" data={referenceRouteFeature}>
+            <Layer
+              id="reference-route-line"
+              type="line"
+              style={{
+                lineColor: 'rgba(188, 255, 0, 0.45)',
+                lineWidth: 4,
+                lineDasharray: [2, 1.5],
+              }}
+            />
+          </GeoJSONSource>
         )}
 
-        {points.length > 0 && !loopClosed && (
-          <Polyline coordinates={points} strokeColor="#BCFF00" strokeWidth={4} />
+        {liveTrackFeature && liveTrackFeature.geometry.type === 'Polygon' && (
+          <GeoJSONSource id="live-track" data={liveTrackFeature}>
+            <Layer
+              id="live-track-fill"
+              type="fill"
+              style={{ fillColor: 'rgba(188, 255, 0, 0.25)' }}
+            />
+            <Layer id="live-track-stroke" type="line" style={{ lineColor: '#BCFF00', lineWidth: 3 }} />
+          </GeoJSONSource>
         )}
-      </MapView>
+
+        {liveTrackFeature && liveTrackFeature.geometry.type === 'LineString' && (
+          <GeoJSONSource id="live-track" data={liveTrackFeature}>
+            <Layer id="live-track-line" type="line" style={{ lineColor: '#BCFF00', lineWidth: 4 }} />
+          </GeoJSONSource>
+        )}
+      </Map>
 
       {/* camada transparente que captura o arrastar-dedo; só "escuta"
           toque quando drawable=true, senão deixa passar pro mapa normal */}
@@ -272,5 +358,5 @@ function MapComponent(
   );
 }
 
-const Map = forwardRef(MapComponent);
-export default Map;
+const MapComponentWithRef = forwardRef(MapComponent);
+export default MapComponentWithRef;

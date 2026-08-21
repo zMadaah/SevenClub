@@ -1,4 +1,4 @@
-import { LatLng } from 'react-native-maps';
+import { LatLng } from '../utils/geo';
 
 export interface SavedRoute {
   id: string;

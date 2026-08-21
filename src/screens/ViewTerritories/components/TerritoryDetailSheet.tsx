@@ -1,11 +1,11 @@
 import React from 'react';
 import { View, Text, Image, TouchableOpacity, ScrollView } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import MapView, { Polygon } from 'react-native-maps';
-
+import { Map, Camera, GeoJSONSource, Layer } from '@maplibre/maplibre-react-native';
+import type { Feature, Polygon as GeoJSONPolygon } from 'geojson';
 
 import DraggableLineChart from '../../../components/DraggleLineChart';
-import { darkMapStyle } from '../../../Map/darkMapStyle';
+import { MAP_STYLE_URL_DARK } from '../../../config/mapStyle';
 import { TerritoryEntry } from '../../../types/territory';
 import { colors } from '../../../theme/colors';
 import { styles } from './TerritoryDetailSheet.styles';
@@ -109,27 +109,37 @@ export default function TerritoryDetailSheet({
         </View>
 
         <View style={styles.routeMapCard}>
-          <MapView
+          <Map
             style={styles.routeMap}
-            customMapStyle={darkMapStyle}
-            scrollEnabled={false}
-            zoomEnabled={false}
-            rotateEnabled={false}
-            pitchEnabled={false}
-            initialRegion={{
-              latitude: territory.points[0].latitude,
-              longitude: territory.points[0].longitude,
-              latitudeDelta: 0.012,
-              longitudeDelta: 0.012,
-            }}
+            mapStyle={MAP_STYLE_URL_DARK}
+            dragPan={false}
+            touchZoom={false}
+            touchRotate={false}
+            touchPitch={false}
           >
-            <Polygon
-              coordinates={territory.points}
-              fillColor="transparent"
-              strokeColor={colors.accent}
-              strokeWidth={3}
+            <Camera
+              initialViewState={{
+                center: [territory.points[0].longitude, territory.points[0].latitude],
+                zoom: 15,
+              }}
             />
-          </MapView>
+
+            <GeoJSONSource
+              id="territory-detail-outline"
+              data={
+                {
+                  type: 'Feature',
+                  properties: {},
+                  geometry: {
+                    type: 'Polygon',
+                    coordinates: [territory.points.map((p) => [p.longitude, p.latitude] as [number, number])],
+                  },
+                } as Feature<GeoJSONPolygon>
+              }
+            >
+              <Layer id="territory-detail-outline-line" type="line" style={{ lineColor: colors.accent, lineWidth: 3 }} />
+            </GeoJSONSource>
+          </Map>
         </View>
 
         {/* <View style={styles.socialRow}>

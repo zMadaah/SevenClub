@@ -24,6 +24,14 @@ drawPoint: {
     borderWidth: 1.5,
     borderColor: '#BCFF00',
   },
+  userDot: {
+    width: 18,
+    height: 18,
+    borderRadius: 9,
+    backgroundColor: '#378ADD',
+    borderWidth: 3,
+    borderColor: '#fff',
+  },
   drawLayer: {
     ...StyleSheet.absoluteFillObject,
   },

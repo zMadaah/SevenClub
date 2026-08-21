@@ -1,4 +1,4 @@
-import { LatLng } from 'react-native-maps';
+import { LatLng } from '../utils/geo';
 import { SavedRoute } from '../types/route';
 import { CompletedActivity, ActivitySummary } from '../types/activity';
 import { ActivityStats } from '../types/stats';
@@ -516,6 +516,12 @@ export const authApi = {
 
   getFollowCounts: (authFetch: AuthFetch) =>
     authFetch<{ followingCount: number; followersCount: number }>('/follows/counts'),
+
+  registerPushToken: (authFetch: AuthFetch, token: string) =>
+    authFetch<void>('/notifications/register-token', {
+      method: 'POST',
+      body: JSON.stringify({ token }),
+    }),
 
   getTerritoryCells: (
     authFetch: AuthFetch,

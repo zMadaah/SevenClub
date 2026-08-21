@@ -24,6 +24,7 @@ import ActivitySummaryModal from './components/ActivitySummaryModal';
 import RouteSelectModal from './components/RouteSelectModal';
 import ActivityTypeModal from './components/ActivityTypeModal';
 import MapOptionsModal from './components/MapOptionsModal';
+import CountdownOverlay from './components/CountdownOverlay';
 
 import { colors } from '../../theme/colors';
 import { styles } from './styles';
@@ -35,6 +36,7 @@ export default function ActivityStart() {
   const tracker = useActivityTracker();
 
   const [summaryVisible, setSummaryVisible] = useState(false);
+  const [countingDown, setCountingDown] = useState(false);
   const [activityName, setActivityName] = useState('');
   const [saving, setSaving] = useState(false);
 
@@ -89,7 +91,7 @@ export default function ActivityStart() {
 
   function handleToggle() {
     if (!tracker.isRunning) {
-      tracker.start();
+      setCountingDown(true); // tracker.start() só dispara quando a contagem chegar em zero
     } else if (tracker.isPaused) {
       tracker.resume();
     } else {
@@ -158,6 +160,16 @@ export default function ActivityStart() {
         activityType={activityType}
       />
 
+      {countingDown && (
+        <CountdownOverlay
+          seconds={5}
+          onFinish={() => {
+            setCountingDown(false);
+            tracker.start();
+          }}
+        />
+      )}
+
       <View style={styles.header}>
         <TouchableOpacity style={styles.backButton} onPress={() => navigation.goBack()}>
           <Ionicons name="chevron-back" size={20} colors={colors.overlay} />
@@ -205,7 +217,12 @@ export default function ActivityStart() {
       />
 
       {!tracker.isRunning ? (
-        <TouchableOpacity style={styles.startButton} activeOpacity={0.85} onPress={handleToggle}>
+        <TouchableOpacity
+          style={styles.startButton}
+          activeOpacity={0.85}
+          onPress={handleToggle}
+          disabled={countingDown}
+        >
           <Text style={styles.startText}>{buttonLabel}</Text>
         </TouchableOpacity>
       ) : (

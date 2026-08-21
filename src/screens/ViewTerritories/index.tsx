@@ -3,10 +3,11 @@ import { View, Text, TouchableOpacity, Alert } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useNavigation } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
-import MapView, { Polygon, Polyline } from 'react-native-maps';
+import { Map, Camera, GeoJSONSource, Layer } from '@maplibre/maplibre-react-native';
+import type { Feature, LineString, Polygon as GeoJSONPolygon } from 'geojson';
 
 import { RootStackParamList } from '../../navigation/types';
-import { darkMapStyle } from '../../Map/darkMapStyle';
+import { MAP_STYLE_URL_DARK } from '../../config/mapStyle';
 import { SavedRoute } from '../../types/route';
 import { useSavedRoutes } from '../../contexts/SavedRoutesContext';
 import { ApiError } from '../../services/api';
@@ -109,27 +110,44 @@ export default function ViewTerritories() {
 
       <View style={styles.mapArea}>
         {selectedRoute ? (
-          <MapView
-            style={styles.map}
-            customMapStyle={darkMapStyle}
-            initialRegion={{
-              latitude: selectedRoute.points[0].latitude,
-              longitude: selectedRoute.points[0].longitude,
-              latitudeDelta: 0.02,
-              longitudeDelta: 0.02,
-            }}
-          >
-            {loopClosed ? (
-              <Polygon
-                coordinates={selectedRoute.points}
-                fillColor="rgba(188, 255, 0, 0.3)"
-                strokeColor={colors.accent}
-                strokeWidth={2}
-              />
-            ) : (
-              <Polyline coordinates={selectedRoute.points} strokeColor={colors.accent} strokeWidth={3} />
-            )}
-          </MapView>
+          <Map style={styles.map} mapStyle={MAP_STYLE_URL_DARK}>
+            <Camera
+              initialViewState={{
+                center: [selectedRoute.points[0].longitude, selectedRoute.points[0].latitude],
+                zoom: 15,
+              }}
+            />
+
+            <GeoJSONSource
+              id="selected-route"
+              data={
+                {
+                  type: 'Feature',
+                  properties: {},
+                  geometry: loopClosed
+                    ? {
+                        type: 'Polygon',
+                        coordinates: [
+                          selectedRoute.points.map((p) => [p.longitude, p.latitude] as [number, number]),
+                        ],
+                      }
+                    : {
+                        type: 'LineString',
+                        coordinates: selectedRoute.points.map((p) => [p.longitude, p.latitude] as [number, number]),
+                      },
+                } as Feature<GeoJSONPolygon | LineString>
+              }
+            >
+              {loopClosed ? (
+                <>
+                  <Layer id="selected-route-fill" type="fill" style={{ fillColor: 'rgba(188, 255, 0, 0.3)' }} />
+                  <Layer id="selected-route-stroke" type="line" style={{ lineColor: colors.accent, lineWidth: 2 }} />
+                </>
+              ) : (
+                <Layer id="selected-route-line" type="line" style={{ lineColor: colors.accent, lineWidth: 3 }} />
+              )}
+            </GeoJSONSource>
+          </Map>
         ) : (
           <View style={styles.emptyMap}>
             <Ionicons name="location-outline" size={28} color={colors.laurelLeaf} />

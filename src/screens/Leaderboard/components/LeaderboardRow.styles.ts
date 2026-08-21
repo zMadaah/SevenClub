@@ -42,4 +42,9 @@ export const styles = StyleSheet.create({
     fontWeight: '600',
     color: colors.textSecondary,
   },
+  distanceLabel: {
+    fontSize: 10,
+    color: colors.textSecondary,
+    marginTop: 1,
+  },
 });

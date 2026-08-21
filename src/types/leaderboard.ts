@@ -10,6 +10,7 @@ export interface LeaderboardEntry {
   countryFlag: string;
   countryCode: string;
   territoryKm2: number;
+  distanceKm: number;
   activityType: ActivityType;
 }
 

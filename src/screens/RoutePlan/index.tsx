@@ -3,7 +3,7 @@ import { View, Text, TouchableOpacity, Alert } from 'react-native';
 import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
 import { useNavigation } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
-import { LatLng } from 'react-native-maps';
+import { LatLng } from '../../utils/geo';
 
 import Map, { MapHandle } from '../../Map';
 

@@ -29,9 +29,12 @@ export default function LeaderboardRow({ entry }: LeaderboardRowProps) {
         {entry.name}
       </Text>
 
-      <Text style={styles.value}>
-        {entry.territoryKm2.toFixed(1)} <Text style={styles.unit}>km²</Text>
-      </Text>
+      <View style={{ alignItems: 'flex-end' }}>
+        <Text style={styles.value}>
+          {entry.territoryKm2.toFixed(1)} <Text style={styles.unit}>km²</Text>
+        </Text>
+        <Text style={styles.distanceLabel}>{entry.distanceKm.toFixed(1)} km percorridos</Text>
+      </View>
     </View>
   );
 }

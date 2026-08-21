@@ -1,7 +1,6 @@
 import { useRef, useState, useEffect } from 'react';
 import * as Location from 'expo-location';
-import { LatLng } from 'react-native-maps';
-import { totalDistance } from '../utils/geo';
+import { totalDistance, LatLng } from '../utils/geo';
 
 export function useActivityTracker() {
   const [isRunning, setIsRunning] = useState(false);

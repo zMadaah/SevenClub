@@ -1,8 +1,11 @@
-import React, { useEffect, useRef } from 'react';
+import React from 'react';
 import { Modal, View, Text, TextInput, TouchableOpacity, Image } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import MapView, { Polygon, Polyline, LatLng } from 'react-native-maps';
+import { Map, Camera, GeoJSONSource, Layer } from '@maplibre/maplibre-react-native';
+import type { Feature, LineString, Polygon as GeoJSONPolygon } from 'geojson';
 
+import { LatLng } from '../../../utils/geo';
+import { MAP_STYLE_URL } from '../../../config/mapStyle';
 import { styles } from './RoutePreviewModal.styles';
 
 interface Runner {
@@ -30,6 +33,12 @@ const MOCK_RUNNERS: Runner[] = [
   { id: '3', avatarUrl: 'https://i.pravatar.cc/200?img=47' },
 ];
 
+function boundsForPoints(points: LatLng[]): [number, number, number, number] {
+  const lats = points.map((p) => p.latitude);
+  const lngs = points.map((p) => p.longitude);
+  return [Math.min(...lngs), Math.min(...lats), Math.max(...lngs), Math.max(...lats)];
+}
+
 export default function RoutePreviewModal({
   visible,
   onClose,
@@ -43,19 +52,16 @@ export default function RoutePreviewModal({
   saving,
   nearbyRunners = MOCK_RUNNERS,
 }: RoutePreviewModalProps) {
-  const previewMapRef = useRef<MapView>(null);
-
-  useEffect(() => {
-    if (visible && points.length > 1) {
-      const timeout = setTimeout(() => {
-        previewMapRef.current?.fitToCoordinates(points, {
-          edgePadding: { top: 40, right: 40, bottom: 40, left: 40 },
-          animated: false,
-        });
-      }, 150);
-      return () => clearTimeout(timeout);
-    }
-  }, [visible, points]);
+  const trackFeature: Feature<GeoJSONPolygon | LineString> | null =
+    points.length > 1
+      ? {
+          type: 'Feature',
+          properties: {},
+          geometry: loopClosed
+            ? { type: 'Polygon', coordinates: [points.map((p) => [p.longitude, p.latitude] as [number, number])] }
+            : { type: 'LineString', coordinates: points.map((p) => [p.longitude, p.latitude] as [number, number]) },
+        }
+      : null;
 
   const km = (distanceMeters / 1000).toFixed(2);
   const captureLabel = captureM2 >= 10000 ? (captureM2 / 1000000).toFixed(2) : Math.round(captureM2).toString();
@@ -74,32 +80,33 @@ export default function RoutePreviewModal({
           </View>
 
           <View style={styles.mapPreview}>
-            {points.length > 1 && (
-              <MapView
-                ref={previewMapRef}
+            {trackFeature && (
+              <Map
                 style={styles.mapPreviewInner}
-                scrollEnabled={false}
-                zoomEnabled={false}
-                rotateEnabled={false}
-                pitchEnabled={false}
-                initialRegion={{
-                  latitude: points[0].latitude,
-                  longitude: points[0].longitude,
-                  latitudeDelta: 0.01,
-                  longitudeDelta: 0.01,
-                }}
+                mapStyle={MAP_STYLE_URL}
+                dragPan={false}
+                touchZoom={false}
+                touchRotate={false}
+                touchPitch={false}
               >
-                {loopClosed ? (
-                  <Polygon
-                    coordinates={points}
-                    fillColor="rgba(188, 255, 0, 0.3)"
-                    strokeColor="#7FBF00"
-                    strokeWidth={3}
-                  />
-                ) : (
-                  <Polyline coordinates={points} strokeColor="#7FBF00" strokeWidth={4} />
-                )}
-              </MapView>
+                <Camera
+                  initialViewState={{
+                    bounds: boundsForPoints(points),
+                    padding: { top: 40, right: 40, bottom: 40, left: 40 },
+                  }}
+                />
+
+                <GeoJSONSource id="route-preview-track" data={trackFeature}>
+                  {loopClosed ? (
+                    <>
+                      <Layer id="route-preview-fill" type="fill" style={{ fillColor: 'rgba(188, 255, 0, 0.3)' }} />
+                      <Layer id="route-preview-stroke" type="line" style={{ lineColor: '#7FBF00', lineWidth: 3 }} />
+                    </>
+                  ) : (
+                    <Layer id="route-preview-line" type="line" style={{ lineColor: '#7FBF00', lineWidth: 4 }} />
+                  )}
+                </GeoJSONSource>
+              </Map>
             )}
           </View>
 
